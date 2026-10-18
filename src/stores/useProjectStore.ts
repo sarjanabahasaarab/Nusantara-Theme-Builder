@@ -1,19 +1,31 @@
 /**
  * Nusantara Theme Builder — Zustand Global Store
  * Satu sumber kebenaran (single source of truth) untuk state aplikasi,
- * manajemen proyek, visual editor, inspector, Monaco editor, dan riwayat undo/redo.
+ * manajemen proyek, visual editor, inspector, Monaco editor, File Explorer,
+ * Asset Management, dan riwayat undo/redo.
  */
 
 import { create } from 'zustand';
-import { Project, ProjectSummary, ThemeComponent, ThemeSettings } from '../types/project';
-import { projectService } from '../services/project-service';
+import {
+  Project,
+  ProjectSummary,
+  ThemeComponent,
+  ThemeSettings,
+  ProjectAsset,
+  ProjectFileNode
+} from '../types/project';
+import { projectService, ProjectListOptions } from '../services/project-service';
 import { StarterTemplateId } from '../domain/project/project-factory';
+import { assetService } from '../services/asset-service';
+import { fileExplorerService } from '../services/file-explorer-service';
 
 export type ActiveAppView =
   | 'dashboard'
   | 'projects'
   | 'visual-editor'
   | 'code-editor'
+  | 'file-explorer'
+  | 'assets'
   | 'blogger'
   | 'wordpress'
   | 'templates'
@@ -52,6 +64,13 @@ interface ProjectState {
   activePageId: string;
   selectedComponentId: string | null;
 
+  // File Explorer state
+  selectedFileNodeId: string | null;
+  expandedFolders: string[];
+
+  // Asset Management state
+  selectedAssetId: string | null;
+
   // Code editor state
   codeDocuments: CodeDocument[];
   activeCodeDocId: string;
@@ -69,13 +88,21 @@ interface ProjectState {
   addToast: (type: ToastMessage['type'], message: string) => void;
   removeToast: (id: string) => void;
 
-  refreshProjects: () => Promise<void>;
-  createProject: (name: string, platform: 'blogger' | 'wordpress', templateId?: StarterTemplateId) => Promise<boolean>;
+  refreshProjects: (options?: ProjectListOptions) => Promise<void>;
+  createProject: (
+    name: string,
+    platform: 'blogger' | 'wordpress',
+    templateId?: StarterTemplateId,
+    storagePath?: string
+  ) => Promise<boolean>;
   openProject: (id: string) => Promise<boolean>;
   saveCurrentProject: () => Promise<boolean>;
+  duplicateProject: (id: string, newName?: string) => Promise<boolean>;
+  renameProject: (id: string, newName: string) => Promise<boolean>;
   closeProject: () => void;
   deleteProject: (id: string) => Promise<boolean>;
   importProjectFromJson: (jsonString: string) => Promise<{ success: boolean; error?: string }>;
+  exportCurrentProjectFile: () => void;
 
   // Component editing
   selectComponent: (id: string | null) => void;
@@ -84,6 +111,20 @@ interface ProjectState {
   removeComponent: (id: string) => void;
   reorderComponents: (activeId: string, overId: string) => void;
   updateThemeSettings: (updates: Partial<ThemeSettings>) => void;
+
+  // File Explorer operations
+  selectFileNode: (nodeId: string | null) => void;
+  toggleFolder: (folderPath: string) => void;
+  createWorkspaceFile: (parentPath: string, fileName: string, content?: string) => boolean;
+  createWorkspaceFolder: (parentPath: string, folderName: string) => boolean;
+  renameWorkspaceNode: (nodeId: string, newName: string) => boolean;
+  deleteWorkspaceNode: (nodeId: string) => boolean;
+  saveActiveFileContent: (nodeId: string, newContent: string) => void;
+
+  // Asset operations
+  selectAsset: (assetId: string | null) => void;
+  uploadAssetFile: (file: File) => Promise<boolean>;
+  deleteAsset: (assetId: string) => void;
 
   // Undo / Redo
   undo: () => void;
@@ -125,11 +166,12 @@ function createCodeDocumentsForProject(project: Project | null): CodeDocument[] 
   }
 
   const isBlogger = project.targetPlatform === 'blogger';
+  const slug = project.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
 
   return [
     {
-      id: 'project-json',
-      name: `${project.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-project.json`,
+      id: 'project-ntb',
+      name: `${slug}.ntbproject`,
       language: 'json',
       content: JSON.stringify(project, null, 2),
       isReadOnly: false
@@ -221,6 +263,13 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   activePageId: 'page-home',
   selectedComponentId: null,
 
+  // File Explorer state
+  selectedFileNodeId: null,
+  expandedFolders: ['pages', 'styles', 'scripts', 'docs'],
+
+  // Asset state
+  selectedAssetId: null,
+
   codeDocuments: createCodeDocumentsForProject(null),
   activeCodeDocId: 'sample-html',
 
@@ -248,9 +297,9 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     }));
   },
 
-  refreshProjects: async () => {
+  refreshProjects: async (options) => {
     try {
-      const list = await projectService.getAllProjects();
+      const list = await projectService.getAllProjects(options);
       const stats = await projectService.getStorageStats();
       set({ recentProjects: list, storageInfo: stats });
     } catch (err) {
@@ -258,16 +307,18 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     }
   },
 
-  createProject: async (name, platform, templateId = 'personal-blog') => {
+  createProject: async (name, platform, templateId = 'personal-blog', storagePath) => {
     try {
       set({ saveStatus: 'saving' });
-      const newProj = await projectService.createNew(name, platform, templateId);
+      const newProj = await projectService.createNew(name, platform, templateId, storagePath);
       const docs = createCodeDocumentsForProject(newProj);
       
       set({
         currentProject: newProj,
         activePageId: newProj.pages[0]?.id || 'page-home',
         selectedComponentId: null,
+        selectedFileNodeId: null,
+        selectedAssetId: null,
         isDirty: false,
         saveStatus: 'saved',
         lastSavedAt: new Date().toLocaleTimeString('id-ID'),
@@ -295,12 +346,20 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         get().addToast('error', 'Proyek tidak ditemukan.');
         return false;
       }
+
+      // Ensure customFiles is initialized
+      if (!project.customFiles || project.customFiles.length === 0) {
+        project.customFiles = fileExplorerService.getProjectFileTree(project);
+      }
+
       const docs = createCodeDocumentsForProject(project);
 
       set({
         currentProject: project,
         activePageId: project.pages[0]?.id || 'page-home',
         selectedComponentId: null,
+        selectedFileNodeId: null,
+        selectedAssetId: null,
         isDirty: false,
         saveStatus: 'saved',
         lastSavedAt: new Date(project.updatedAt).toLocaleTimeString('id-ID'),
@@ -346,10 +405,39 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     }
   },
 
+  duplicateProject: async (id, newName) => {
+    try {
+      const cloned = await projectService.duplicateProject(id, newName);
+      await get().refreshProjects();
+      get().addToast('success', `Proyek berhasil digandakan sebagai "${cloned.name}".`);
+      return true;
+    } catch (err) {
+      get().addToast('error', 'Gagal menggandakan proyek: ' + (err instanceof Error ? err.message : String(err)));
+      return false;
+    }
+  },
+
+  renameProject: async (id, newName) => {
+    try {
+      const renamed = await projectService.renameProject(id, newName);
+      if (get().currentProject?.id === id) {
+        set({ currentProject: renamed, isDirty: false });
+      }
+      await get().refreshProjects();
+      get().addToast('success', `Nama proyek berhasil diubah menjadi "${renamed.name}".`);
+      return true;
+    } catch (err) {
+      get().addToast('error', 'Gagal mengganti nama: ' + (err instanceof Error ? err.message : String(err)));
+      return false;
+    }
+  },
+
   closeProject: () => {
     set({
       currentProject: null,
       selectedComponentId: null,
+      selectedFileNodeId: null,
+      selectedAssetId: null,
       isDirty: false,
       saveStatus: 'saved',
       undoStack: [],
@@ -387,11 +475,10 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     }
 
     try {
-      // Check if project with same ID already exists to prevent silent overwrite
+      // Check collision
       const existing = await projectService.getProjectById(parsed.project.id);
       let projectToSave = parsed.project;
       if (existing) {
-        // Generate new ID and notify user
         const newId = 'ntb-' + Math.random().toString(36).substring(2, 9) + '-' + Date.now().toString(36);
         projectToSave = {
           ...parsed.project,
@@ -414,13 +501,34 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     }
   },
 
+  exportCurrentProjectFile: () => {
+    const { currentProject } = get();
+    if (!currentProject) return;
+
+    try {
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(currentProject, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute(
+        'download',
+        `${currentProject.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.ntbproject`
+      );
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      get().addToast('success', `File format .ntbproject untuk "${currentProject.name}" berhasil diunduh.`);
+    } catch {
+      get().addToast('error', 'Gagal mengekspor file proyek.');
+    }
+  },
+
+  // Component editing
   selectComponent: (id) => set({ selectedComponentId: id }),
 
   addComponent: (component, targetIndex) => {
     const { currentProject, activePageId, undoStack } = get();
     if (!currentProject) return;
 
-    // Push to undo stack
     const newUndo = [...undoStack, JSON.parse(JSON.stringify(currentProject))].slice(-MAX_HISTORY_STEPS);
 
     const updatedPages = currentProject.pages.map((p) => {
@@ -566,6 +674,229 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     });
   },
 
+  // File Explorer Actions
+  selectFileNode: (nodeId) => set({ selectedFileNodeId: nodeId }),
+
+  toggleFolder: (folderPath) => {
+    const { expandedFolders } = get();
+    if (expandedFolders.includes(folderPath)) {
+      set({ expandedFolders: expandedFolders.filter((f) => f !== folderPath) });
+    } else {
+      set({ expandedFolders: [...expandedFolders, folderPath] });
+    }
+  },
+
+  createWorkspaceFile: (parentPath, fileName, content = '') => {
+    const { currentProject, undoStack } = get();
+    if (!currentProject) return false;
+
+    const currentFiles = fileExplorerService.getProjectFileTree(currentProject);
+    const res = fileExplorerService.createFile(currentFiles, parentPath, fileName, content);
+
+    if (res.error) {
+      get().addToast('error', res.error);
+      return false;
+    }
+
+    const newUndo = [...undoStack, JSON.parse(JSON.stringify(currentProject))].slice(-MAX_HISTORY_STEPS);
+
+    set({
+      currentProject: {
+        ...currentProject,
+        customFiles: res.updatedNodes,
+        updatedAt: new Date().toISOString()
+      },
+      isDirty: true,
+      saveStatus: 'dirty',
+      undoStack: newUndo,
+      redoStack: []
+    });
+
+    get().addToast('success', `File "${fileName}" berhasil dibuat.`);
+    return true;
+  },
+
+  createWorkspaceFolder: (parentPath, folderName) => {
+    const { currentProject, undoStack } = get();
+    if (!currentProject) return false;
+
+    const currentFiles = fileExplorerService.getProjectFileTree(currentProject);
+    const res = fileExplorerService.createFolder(currentFiles, parentPath, folderName);
+
+    if (res.error) {
+      get().addToast('error', res.error);
+      return false;
+    }
+
+    const newUndo = [...undoStack, JSON.parse(JSON.stringify(currentProject))].slice(-MAX_HISTORY_STEPS);
+
+    set({
+      currentProject: {
+        ...currentProject,
+        customFiles: res.updatedNodes,
+        updatedAt: new Date().toISOString()
+      },
+      isDirty: true,
+      saveStatus: 'dirty',
+      undoStack: newUndo,
+      redoStack: []
+    });
+
+    get().addToast('success', `Folder "${folderName}" berhasil dibuat.`);
+    return true;
+  },
+
+  renameWorkspaceNode: (nodeId, newName) => {
+    const { currentProject, undoStack } = get();
+    if (!currentProject) return false;
+
+    const currentFiles = fileExplorerService.getProjectFileTree(currentProject);
+    const res = fileExplorerService.renameNode(currentFiles, nodeId, newName);
+
+    if (res.error) {
+      get().addToast('error', res.error);
+      return false;
+    }
+
+    const newUndo = [...undoStack, JSON.parse(JSON.stringify(currentProject))].slice(-MAX_HISTORY_STEPS);
+
+    set({
+      currentProject: {
+        ...currentProject,
+        customFiles: res.updatedNodes,
+        updatedAt: new Date().toISOString()
+      },
+      isDirty: true,
+      saveStatus: 'dirty',
+      undoStack: newUndo,
+      redoStack: []
+    });
+
+    get().addToast('success', `Nama berhasil diubah menjadi "${newName}".`);
+    return true;
+  },
+
+  deleteWorkspaceNode: (nodeId) => {
+    const { currentProject, undoStack, selectedFileNodeId } = get();
+    if (!currentProject) return false;
+
+    const currentFiles = fileExplorerService.getProjectFileTree(currentProject);
+    const res = fileExplorerService.deleteNode(currentFiles, nodeId);
+
+    if (res.error) {
+      get().addToast('error', res.error);
+      return false;
+    }
+
+    const newUndo = [...undoStack, JSON.parse(JSON.stringify(currentProject))].slice(-MAX_HISTORY_STEPS);
+
+    set({
+      currentProject: {
+        ...currentProject,
+        customFiles: res.updatedNodes,
+        updatedAt: new Date().toISOString()
+      },
+      selectedFileNodeId: selectedFileNodeId === nodeId ? null : selectedFileNodeId,
+      isDirty: true,
+      saveStatus: 'dirty',
+      undoStack: newUndo,
+      redoStack: []
+    });
+
+    get().addToast('info', 'Item berhasil dihapus dari workspace.');
+    return true;
+  },
+
+  saveActiveFileContent: (nodeId, newContent) => {
+    const { currentProject } = get();
+    if (!currentProject) return;
+
+    const updateRecursive = (nodes: ProjectFileNode[]): ProjectFileNode[] => {
+      return nodes.map((n) => {
+        if (n.id === nodeId) {
+          return { ...n, content: newContent, sizeBytes: newContent.length, updatedAt: new Date().toISOString() };
+        }
+        if (n.children) {
+          return { ...n, children: updateRecursive(n.children) };
+        }
+        return n;
+      });
+    };
+
+    const currentFiles = fileExplorerService.getProjectFileTree(currentProject);
+    const updated = updateRecursive(currentFiles);
+
+    set({
+      currentProject: {
+        ...currentProject,
+        customFiles: updated,
+        updatedAt: new Date().toISOString()
+      },
+      isDirty: true,
+      saveStatus: 'dirty'
+    });
+  },
+
+  // Asset Actions
+  selectAsset: (assetId) => set({ selectedAssetId: assetId }),
+
+  uploadAssetFile: async (file) => {
+    const { currentProject, undoStack } = get();
+    if (!currentProject) return false;
+
+    const existing = currentProject.assets || [];
+    const processed = await assetService.processUploadedFile(file, existing);
+
+    if (processed.error || !processed.asset) {
+      get().addToast('error', processed.error || 'Gagal memproses aset.');
+      return false;
+    }
+
+    const newUndo = [...undoStack, JSON.parse(JSON.stringify(currentProject))].slice(-MAX_HISTORY_STEPS);
+
+    set({
+      currentProject: {
+        ...currentProject,
+        assets: [...existing, processed.asset],
+        updatedAt: new Date().toISOString()
+      },
+      selectedAssetId: processed.asset.id,
+      isDirty: true,
+      saveStatus: 'dirty',
+      undoStack: newUndo,
+      redoStack: []
+    });
+
+    get().addToast('success', `Aset "${processed.asset.name}" berhasil diunggah.`);
+    return true;
+  },
+
+  deleteAsset: (assetId) => {
+    const { currentProject, undoStack, selectedAssetId } = get();
+    if (!currentProject) return;
+
+    const existing = currentProject.assets || [];
+    const target = existing.find((a) => a.id === assetId);
+
+    const newUndo = [...undoStack, JSON.parse(JSON.stringify(currentProject))].slice(-MAX_HISTORY_STEPS);
+
+    set({
+      currentProject: {
+        ...currentProject,
+        assets: existing.filter((a) => a.id !== assetId),
+        updatedAt: new Date().toISOString()
+      },
+      selectedAssetId: selectedAssetId === assetId ? null : selectedAssetId,
+      isDirty: true,
+      saveStatus: 'dirty',
+      undoStack: newUndo,
+      redoStack: []
+    });
+
+    get().addToast('info', `Aset "${target?.name || assetId}" dihapus.`);
+  },
+
+  // Undo / Redo
   undo: () => {
     const { currentProject, undoStack, redoStack } = get();
     if (undoStack.length === 0 || !currentProject) return;

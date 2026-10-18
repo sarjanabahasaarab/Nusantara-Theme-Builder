@@ -1,11 +1,13 @@
 /**
  * Nusantara Theme Builder — Project Factory
  * Menghasilkan model proyek starter dengan skema valid v1.0.0
+ * Mendukung Phase 1 & Phase 2 (Starter templates, Blank project, File Tree)
  */
 
-import { Project, TargetPlatform, ThemeComponent } from '../../types/project';
+import { Project, TargetPlatform, ThemeComponent, ProjectFileNode } from '../../types/project';
 
 export type StarterTemplateId =
+  | 'blank'
   | 'personal-blog'
   | 'news-blog'
   | 'digital-magazine'
@@ -20,24 +22,36 @@ export interface StarterTemplateInfo {
   recommendedPlatform: TargetPlatform;
   category: string;
   badge: string;
+  componentCountPreview: number;
 }
 
 export const STARTER_TEMPLATES: StarterTemplateInfo[] = [
+  {
+    id: 'blank',
+    name: 'Proyek Kosong',
+    description: 'Kanvas bersih tanpa komponen awal untuk merancang tema sepenuhnya dari nol.',
+    recommendedPlatform: 'blogger',
+    category: 'Dasar',
+    badge: 'Murni',
+    componentCountPreview: 0
+  },
   {
     id: 'personal-blog',
     name: 'Blog Personal',
     description: 'Tata letak bersih untuk catatan pribadi, cerita reflektif, dan artikel opini.',
     recommendedPlatform: 'blogger',
     category: 'Blog & Editorial',
-    badge: 'Populer'
+    badge: 'Populer',
+    componentCountPreview: 5
   },
   {
     id: 'news-blog',
-    name: 'Blog Berita',
+    name: 'Portal Berita',
     description: 'Grid multi-kolom dengan sorotan tajuk berita utama, ticker, dan kategori.',
     recommendedPlatform: 'wordpress',
     category: 'Media & Berita',
-    badge: 'Multi-kolom'
+    badge: 'Multi-kolom',
+    componentCountPreview: 5
   },
   {
     id: 'digital-magazine',
@@ -45,7 +59,8 @@ export const STARTER_TEMPLATES: StarterTemplateInfo[] = [
     description: 'Desain visual berkelas untuk publikasi gaya hidup, budaya, dan ulasan mendalam.',
     recommendedPlatform: 'wordpress',
     category: 'Publikasi',
-    badge: 'Visual Rich'
+    badge: 'Visual Rich',
+    componentCountPreview: 4
   },
   {
     id: 'portfolio',
@@ -53,7 +68,8 @@ export const STARTER_TEMPLATES: StarterTemplateInfo[] = [
     description: 'Showcase karya visual, studi kasus desain, dan profil profesional.',
     recommendedPlatform: 'blogger',
     category: 'Portofolio',
-    badge: 'Minimalis'
+    badge: 'Minimalis',
+    componentCountPreview: 5
   },
   {
     id: 'tech-blog',
@@ -61,7 +77,8 @@ export const STARTER_TEMPLATES: StarterTemplateInfo[] = [
     description: 'Tipografi modern yang ramah cuplikan kode, tutorial, dan dokumentasi teknologi.',
     recommendedPlatform: 'blogger',
     category: 'Teknologi',
-    badge: 'Code Friendly'
+    badge: 'Code Friendly',
+    componentCountPreview: 4
   },
   {
     id: 'landing-page',
@@ -69,7 +86,8 @@ export const STARTER_TEMPLATES: StarterTemplateInfo[] = [
     description: 'Hero section berdaya pikat tinggi, fitur utama, testimoni, dan CTA konversi.',
     recommendedPlatform: 'wordpress',
     category: 'Marketing',
-    badge: 'Konversi'
+    badge: 'Konversi',
+    componentCountPreview: 4
   }
 ];
 
@@ -103,6 +121,9 @@ export function createComponent(
 
 export function createStarterComponents(templateId: StarterTemplateId): ThemeComponent[] {
   switch (templateId) {
+    case 'blank':
+      return [];
+
     case 'personal-blog':
       return [
         createComponent('header', 'Header Minimalis', 'header', {
@@ -260,22 +281,142 @@ export function createStarterComponents(templateId: StarterTemplateId): ThemeCom
   }
 }
 
+export function createDefaultProjectFiles(projectName: string, platform: TargetPlatform): ProjectFileNode[] {
+  const slug = projectName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const now = new Date().toISOString();
+
+  return [
+    {
+      id: 'f-root-ntbproject',
+      name: `${slug}.ntbproject`,
+      path: `${slug}.ntbproject`,
+      type: 'file',
+      extension: 'ntbproject',
+      sizeBytes: 1024,
+      updatedAt: now,
+      content: '// Format Proyek Internal Nusantara Theme Builder v1.0.0'
+    },
+    {
+      id: 'f-pages',
+      name: 'pages',
+      path: 'pages',
+      type: 'folder',
+      isSystemFolder: true,
+      updatedAt: now,
+      children: [
+        {
+          id: 'f-page-home',
+          name: 'home.json',
+          path: 'pages/home.json',
+          type: 'file',
+          extension: 'json',
+          sizeBytes: 512,
+          updatedAt: now,
+          content: JSON.stringify({ page: 'home', title: 'Beranda' }, null, 2)
+        }
+      ]
+    },
+    {
+      id: 'f-components',
+      name: 'components',
+      path: 'components',
+      type: 'folder',
+      isSystemFolder: true,
+      updatedAt: now,
+      children: []
+    },
+    {
+      id: 'f-assets',
+      name: 'assets',
+      path: 'assets',
+      type: 'folder',
+      isSystemFolder: true,
+      updatedAt: now,
+      children: []
+    },
+    {
+      id: 'f-styles',
+      name: 'styles',
+      path: 'styles',
+      type: 'folder',
+      isSystemFolder: true,
+      updatedAt: now,
+      children: [
+        {
+          id: 'f-style-theme',
+          name: 'theme.css',
+          path: 'styles/theme.css',
+          type: 'file',
+          extension: 'css',
+          sizeBytes: 256,
+          updatedAt: now,
+          content: `/* Gaya CSS Proyek: ${projectName} */\n:root {\n  --ntb-primary: ${platform === 'blogger' ? '#ea580c' : '#2563eb'};\n}`
+        }
+      ]
+    },
+    {
+      id: 'f-scripts',
+      name: 'scripts',
+      path: 'scripts',
+      type: 'folder',
+      isSystemFolder: true,
+      updatedAt: now,
+      children: [
+        {
+          id: 'f-script-main',
+          name: 'main.js',
+          path: 'scripts/main.js',
+          type: 'file',
+          extension: 'js',
+          sizeBytes: 128,
+          updatedAt: now,
+          content: `// Skrip Interaktif Proyek ${projectName}\nconsole.log('Nusantara Theme script loaded');`
+        }
+      ]
+    },
+    {
+      id: 'f-docs',
+      name: 'docs',
+      path: 'docs',
+      type: 'folder',
+      isSystemFolder: true,
+      updatedAt: now,
+      children: [
+        {
+          id: 'f-doc-readme',
+          name: 'README.md',
+          path: 'docs/README.md',
+          type: 'file',
+          extension: 'md',
+          sizeBytes: 300,
+          updatedAt: now,
+          content: `# ${projectName}\n\nDibuat dengan Nusantara Theme Builder untuk target ${platform}.`
+        }
+      ]
+    }
+  ];
+}
+
 export function createNewProject(
   name: string,
   targetPlatform: TargetPlatform,
-  templateId: StarterTemplateId = 'personal-blog'
+  templateId: StarterTemplateId = 'personal-blog',
+  storagePath?: string
 ): Project {
   const now = new Date().toISOString();
   const id = generateUUID();
   const components = createStarterComponents(templateId);
+  const trimmedName = name.trim() || 'Proyek Tanpa Nama';
+  const customFiles = createDefaultProjectFiles(trimmedName, targetPlatform);
 
   return {
     schemaVersion: '1.0.0',
     id,
-    name: name.trim() || 'Proyek Tanpa Nama',
+    name: trimmedName,
     targetPlatform,
     createdAt: now,
     updatedAt: now,
+    storagePath: storagePath || `~/NusantaraProjects/${trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
     themeSettings: {
       primaryColor: targetPlatform === 'blogger' ? '#ea580c' : '#2563eb',
       secondaryColor: '#64748b',
@@ -296,12 +437,13 @@ export function createNewProject(
       }
     ],
     assets: [],
+    customFiles,
     metadata: {
       author: 'Pengembang Nusantara',
       description: `Proyek tema ${targetPlatform === 'blogger' ? 'Blogger' : 'WordPress'} dibuat menggunakan Nusantara Theme Builder.`,
-      version: '0.1.0',
+      version: '0.2.0',
       license: 'MIT',
-      tags: [targetPlatform, templateId, 'phase-1']
+      tags: [targetPlatform, templateId, 'phase-2']
     }
   };
 }

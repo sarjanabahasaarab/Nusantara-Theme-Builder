@@ -1,7 +1,7 @@
 /**
  * Nusantara Theme Builder — Top Toolbar
  * Baris atas standar aplikasi desktop: Logo, Nama Proyek, Status Simpan Riil,
- * Undo/Redo, Simpan, Pratinjau, Viewport, dan Ekspor JSON.
+ * Undo/Redo, Simpan, Pratinjau, Viewport, dan Ekspor .ntbproject.
  */
 
 import React, { useState } from 'react';
@@ -20,11 +20,12 @@ import {
   Monitor,
   Tablet,
   Smartphone,
-  Plus
+  Plus,
+  FolderTree
 } from 'lucide-react';
 import { PreviewModal } from '../modals/PreviewModal';
 import { AboutModal } from '../modals/AboutModal';
-import { NewProjectModal } from '../modals/NewProjectModal';
+import { ProjectCreationWizardModal } from '../modals/ProjectCreationWizardModal';
 
 export const TopToolbar: React.FC = () => {
   const {
@@ -39,41 +40,22 @@ export const TopToolbar: React.FC = () => {
     redoStack,
     viewportMode,
     setViewportMode,
-    addToast
+    exportCurrentProjectFile,
+    setActiveView
   } = useProjectStore();
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
-  const [isNewOpen, setIsNewOpen] = useState(false);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
 
   const canUndo = undoStack.length > 0;
   const canRedo = redoStack.length > 0;
-
-  const handleExportJson = () => {
-    if (!currentProject) return;
-    try {
-      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(currentProject, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute('href', dataStr);
-      downloadAnchor.setAttribute(
-        'download',
-        `${currentProject.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-v1.0.0.json`
-      );
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-      addToast('success', `File proyek "${currentProject.name}" berhasil diunduh.`);
-    } catch {
-      addToast('error', 'Gagal mengekspor file proyek.');
-    }
-  };
 
   return (
     <>
       <header className="h-12 bg-neutral-900/90 border-b border-neutral-800/80 px-4 flex items-center justify-between select-none z-30 shrink-0 backdrop-blur-md">
         {/* Left Section: Logo & Active Project */}
         <div className="flex items-center gap-3">
-          {/* Logo badge */}
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-neutral-950 font-bold text-xs shadow-md">
               N
@@ -81,8 +63,8 @@ export const TopToolbar: React.FC = () => {
             <div className="flex flex-col">
               <span className="text-xs font-bold tracking-tight text-neutral-100 flex items-center gap-1.5">
                 Nusantara Theme Builder
-                <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded">
-                  Phase 1
+                <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded">
+                  Phase 2
                 </span>
               </span>
             </div>
@@ -105,13 +87,21 @@ export const TopToolbar: React.FC = () => {
               >
                 {currentProject.targetPlatform}
               </span>
+
+              <button
+                onClick={() => setActiveView('file-explorer')}
+                className="p-1 text-neutral-500 hover:text-amber-400 rounded transition-colors"
+                title="Buka File Explorer Proyek Ini"
+              >
+                <FolderTree className="w-3.5 h-3.5" />
+              </button>
             </div>
           ) : (
             <div className="hidden sm:flex items-center gap-2">
               <span className="text-xs text-neutral-500 italic">Tidak ada proyek aktif</span>
               <button
-                onClick={() => setIsNewOpen(true)}
-                className="text-[11px] text-amber-400 hover:text-amber-300 font-medium flex items-center gap-1 hover:underline ml-1"
+                onClick={() => setIsWizardOpen(true)}
+                className="text-[11px] text-amber-400 hover:text-amber-300 font-medium flex items-center gap-1 hover:underline ml-1 cursor-pointer"
               >
                 <Plus className="w-3 h-3" /> Buat Proyek
               </button>
@@ -188,7 +178,7 @@ export const TopToolbar: React.FC = () => {
             <button
               onClick={undo}
               disabled={!canUndo}
-              className="p-1.5 text-neutral-300 hover:text-white disabled:opacity-30 disabled:hover:text-neutral-300 rounded hover:bg-neutral-800 transition-colors"
+              className="p-1.5 text-neutral-300 hover:text-white disabled:opacity-30 disabled:hover:text-neutral-300 rounded hover:bg-neutral-800 transition-colors cursor-pointer"
               title="Undo (Ctrl+Z)"
             >
               <Undo2 className="w-3.5 h-3.5" />
@@ -196,7 +186,7 @@ export const TopToolbar: React.FC = () => {
             <button
               onClick={redo}
               disabled={!canRedo}
-              className="p-1.5 text-neutral-300 hover:text-white disabled:opacity-30 disabled:hover:text-neutral-300 rounded hover:bg-neutral-800 transition-colors"
+              className="p-1.5 text-neutral-300 hover:text-white disabled:opacity-30 disabled:hover:text-neutral-300 rounded hover:bg-neutral-800 transition-colors cursor-pointer"
               title="Redo (Ctrl+Y)"
             >
               <Redo2 className="w-3.5 h-3.5" />
@@ -216,12 +206,12 @@ export const TopToolbar: React.FC = () => {
             </button>
           )}
 
-          {/* Export JSON Button */}
+          {/* Export .ntbproject Button */}
           {currentProject && (
             <button
-              onClick={handleExportJson}
-              className="p-1.5 text-neutral-400 hover:text-white rounded-lg hover:bg-neutral-800 transition-colors border border-neutral-800"
-              title="Ekspor Proyek JSON"
+              onClick={exportCurrentProjectFile}
+              className="p-1.5 text-neutral-400 hover:text-white rounded-lg hover:bg-neutral-800 transition-colors border border-neutral-800 cursor-pointer"
+              title="Ekspor Proyek (.ntbproject)"
             >
               <Download className="w-3.5 h-3.5" />
             </button>
@@ -231,7 +221,7 @@ export const TopToolbar: React.FC = () => {
           {currentProject && (
             <button
               onClick={() => setIsPreviewOpen(true)}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-neutral-950 font-semibold shadow-sm transition-all"
+              className="px-3 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-neutral-950 font-semibold shadow-sm transition-all cursor-pointer"
               title="Pratinjau Tema Interaktif"
             >
               <Eye className="w-3.5 h-3.5" />
@@ -242,7 +232,7 @@ export const TopToolbar: React.FC = () => {
           {/* Help & About */}
           <button
             onClick={() => setIsAboutOpen(true)}
-            className="p-1.5 text-neutral-400 hover:text-white rounded-lg hover:bg-neutral-800 transition-colors"
+            className="p-1.5 text-neutral-400 hover:text-white rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer"
             title="Bantuan & Roadmap 10 Fase"
           >
             <HelpCircle className="w-4 h-4" />
@@ -253,7 +243,7 @@ export const TopToolbar: React.FC = () => {
       {/* Modals */}
       <PreviewModal isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} />
       <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
-      <NewProjectModal isOpen={isNewOpen} onClose={() => setIsNewOpen(false)} />
+      <ProjectCreationWizardModal isOpen={isWizardOpen} onClose={() => setIsWizardOpen(false)} />
     </>
   );
 };

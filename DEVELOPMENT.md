@@ -61,7 +61,9 @@ nusantara-theme-builder/
 │   │   └── wordpress/
 │   │       └── wordpress-module.ts  # Model arsitektur & kesiapan WordPress
 │   ├── services/
-│   │   ├── project-service.ts       # Layanan CRUD proyek
+│   │   ├── project-service.ts       # Layanan CRUD proyek, duplikasi, & rename
+│   │   ├── asset-service.ts         # Layanan pemrosesan & sanitasi aset
+│   │   ├── file-explorer-service.ts # Layanan pengelolaan file workspace & path guards
 │   │   ├── validation-service.ts    # Layanan validasi terpadu
 │   │   └── storage/
 │   │       ├── storage-adapter.ts   # Interface penyimpanan
@@ -76,14 +78,18 @@ nusantara-theme-builder/
 │   │   ├── common/
 │   │   │   └── ToastContainer.tsx   # Notifikasi sistem informatif
 │   │   └── modals/
-│   │       ├── NewProjectModal.tsx  # Dialog proyek baru
-│   │       ├── ImportProjectModal.tsx # Dialog impor file JSON
-│   │       ├── ConfirmDeleteModal.tsx # Konfirmasi penghapusan aman
-│   │       ├── PreviewModal.tsx     # Pratinjau responsif kanvas
-│   │       └── AboutModal.tsx       # Informasi lisensi dan roadmap
+│   │       ├── ProjectCreationWizardModal.tsx # Wizard 5-Langkah pembuatan proyek
+│   │       ├── DuplicateProjectModal.tsx      # Dialog penggandaan proyek
+│   │       ├── RenameProjectModal.tsx         # Dialog ganti nama proyek
+│   │       ├── ImportProjectModal.tsx         # Dialog impor file .ntbproject
+│   │       ├── ConfirmDeleteModal.tsx         # Konfirmasi penghapusan aman
+│   │       ├── PreviewModal.tsx               # Pratinjau responsif kanvas
+│   │       └── AboutModal.tsx                 # Informasi lisensi dan roadmap
 │   └── features/
-│       ├── dashboard/               # Tampilan beranda & metrik
+│       ├── dashboard/               # Tampilan beranda, filter, & pencarian
 │       ├── projects/                # Manajer pencarian & daftar proyek
+│       ├── file-explorer/           # Eksplorasi struktur berkas workspace
+│       ├── assets/                  # Pengelolaan aset lokal terisolasi
 │       ├── visual-editor/           # Editor visual drag-and-drop
 │       ├── code-editor/             # Editor kode Monaco
 │       ├── blogger/                 # Modul arsitektur Blogger
@@ -101,17 +107,22 @@ nusantara-theme-builder/
 │       └── default.json         # Izin sistem desktop terkontrol
 ├── tests/
 │   └── unit/
-│       ├── project-validation.test.ts # Tes validasi input dan skema
-│       ├── project-factory.test.ts    # Tes factory dan UUID
-│       ├── serialization.test.ts      # Tes impor/ekspor JSON
-│       ├── undo-redo.test.ts          # Tes riwayat stack undo/redo
-│       └── storage.test.ts            # Tes adaptor penyimpanan lokal
+│       ├── project-service-phase2.test.ts # Tes duplikasi & rename
+│       ├── file-explorer.test.ts          # Tes berkas workspace & path traversal
+│       ├── asset-management.test.ts       # Tes aset, nama unik, & keamanan SVG
+│       ├── template-library.test.ts       # Tes isolasi master template
+│       ├── project-validation.test.ts     # Tes validasi input dan skema
+│       ├── project-factory.test.ts        # Tes factory dan UUID
+│       ├── serialization.test.ts          # Tes impor/ekspor .ntbproject
+│       ├── undo-redo.test.ts              # Tes riwayat stack undo/redo
+│       └── storage.test.ts                # Tes adaptor penyimpanan lokal
 ├── docs/
 │   └── ARCHITECTURE.md          # Penjelasan arsitektur mendalam
 ├── LICENSE                      # Lisensi resmi MIT
 ├── README.md                    # Dokumentasi utama proyek
 ├── ROADMAP.md                   # Rincian 10 fase pengembangan
-└── PHASE-1.md                   # Verifikasi dan batasan Phase 1
+├── PHASE-1.md                   # Verifikasi dan batasan Phase 1
+└── PHASE-2.md                   # Verifikasi dan batasan Phase 2
 ```
 
 ---

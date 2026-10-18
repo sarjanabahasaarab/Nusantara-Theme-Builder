@@ -1,6 +1,7 @@
 /**
- * Nusantara Theme Builder — Projects Manager View
- * Manajemen proyek tersimpan lokal: pencarian, filter platform, ekspor, impor, dan hapus aman.
+ * Nusantara Theme Builder — Projects Manager View (Phase 2)
+ * Manajemen proyek tersimpan lokal: pencarian, filter platform, pengurutan,
+ * penggantian nama, penggandaan, ekspor .ntbproject, dan hapus aman.
  */
 
 import React, { useState } from 'react';
@@ -10,30 +11,81 @@ import {
   Upload,
   Search,
   Trash2,
+  Copy,
+  Edit3,
   Download,
   ArrowRight,
   Filter,
   Layers,
-  Calendar
+  Calendar,
+  FolderTree,
+  ArrowUpDown
 } from 'lucide-react';
-import { NewProjectModal } from '../../components/modals/NewProjectModal';
+import { ProjectCreationWizardModal } from '../../components/modals/ProjectCreationWizardModal';
 import { ImportProjectModal } from '../../components/modals/ImportProjectModal';
 import { ConfirmDeleteModal } from '../../components/modals/ConfirmDeleteModal';
+import { DuplicateProjectModal } from '../../components/modals/DuplicateProjectModal';
+import { RenameProjectModal } from '../../components/modals/RenameProjectModal';
 import { TargetPlatform } from '../../types/project';
+import { projectService } from '../../services/project-service';
 
 export const ProjectsManagerView: React.FC = () => {
-  const { recentProjects, openProject, deleteProject, addToast } = useProjectStore();
+  const { recentProjects, openProject, deleteProject, addToast, setActiveView } = useProjectStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [platformFilter, setPlatformFilter] = useState<'all' | TargetPlatform>('all');
-  const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<'updatedAt' | 'createdAt' | 'name'>('updatedAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  const [isWizardModalOpen, setIsWizardModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [projectToDuplicate, setProjectToDuplicate] = useState<{ id: string; name: string } | null>(null);
+  const [projectToRename, setProjectToRename] = useState<{ id: string; name: string } | null>(null);
 
-  const filteredProjects = recentProjects.filter((p) => {
-    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPlatform = platformFilter === 'all' || p.targetPlatform === platformFilter;
-    return matchesSearch && matchesPlatform;
-  });
+  const filteredProjects = recentProjects
+    .filter((p) => {
+      const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesPlatform = platformFilter === 'all' || p.targetPlatform === platformFilter;
+      return matchesSearch && matchesPlatform;
+    })
+    .sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === 'name') {
+        cmp = a.name.localeCompare(b.name, 'id');
+      } else if (sortBy === 'createdAt') {
+        cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      } else {
+        cmp = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+      }
+      return sortOrder === 'asc' ? cmp : -cmp;
+    });
+
+  const handleExportProject = async (id: string, name: string) => {
+    try {
+      const full = await projectService.getProjectById(id);
+      if (!full) return;
+
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(full, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute(
+        'download',
+        `${name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.ntbproject`
+      );
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+
+      addToast('success', `File .ntbproject untuk "${name}" berhasil diekspor.`);
+    } catch {
+      addToast('error', 'Gagal mengekspor berkas proyek.');
+    }
+  };
+
+  const handleOpenFolder = (id: string) => {
+    openProject(id);
+    setActiveView('file-explorer');
+  };
 
   return (
     <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
@@ -42,29 +94,29 @@ export const ProjectsManagerView: React.FC = () => {
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight">Proyek Saya</h1>
           <p className="text-xs text-neutral-400">
-            Kelola seluruh tema Blogger dan WordPress yang tersimpan di komputer Anda.
+            Kelola, duplikasi, ganti nama, dan ekspor tema Blogger dan WordPress lokal.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="px-3.5 py-2 text-xs font-medium text-neutral-200 bg-neutral-800 hover:bg-neutral-700 rounded-lg border border-neutral-700 flex items-center gap-2 transition-colors"
+            className="px-3.5 py-2 text-xs font-medium text-neutral-200 bg-neutral-800 hover:bg-neutral-700 rounded-lg border border-neutral-700 flex items-center gap-2 transition-colors cursor-pointer"
           >
             <Upload className="w-3.5 h-3.5 text-neutral-400" />
-            <span>Impor JSON</span>
+            <span>Impor .ntbproject</span>
           </button>
           <button
-            onClick={() => setIsNewModalOpen(true)}
-            className="px-4 py-2 text-xs font-semibold text-neutral-950 bg-amber-400 hover:bg-amber-300 rounded-lg shadow-sm flex items-center gap-2 transition-colors"
+            onClick={() => setIsWizardModalOpen(true)}
+            className="px-4 py-2 text-xs font-semibold text-neutral-950 bg-amber-400 hover:bg-amber-300 rounded-lg shadow-sm flex items-center gap-2 transition-colors cursor-pointer"
           >
             <FolderPlus className="w-4 h-4" />
-            <span>Proyek Baru</span>
+            <span>Proyek Baru (Wizard)</span>
           </button>
         </div>
       </div>
 
-      {/* Search and Filters Bar */}
+      {/* Search, Filter, and Sort Bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1 relative">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
@@ -101,6 +153,26 @@ export const ProjectsManagerView: React.FC = () => {
             }`}
           >
             WordPress
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="px-3 py-2 bg-neutral-900 border border-neutral-800 rounded-lg text-xs text-neutral-300"
+          >
+            <option value="updatedAt">Diubah Terakhir</option>
+            <option value="createdAt">Dibuat Terakhir</option>
+            <option value="name">Nama Alfabetis</option>
+          </select>
+
+          <button
+            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+            className="p-2 bg-neutral-900 border border-neutral-800 rounded-lg text-neutral-400 hover:text-white"
+            title="Ubah Urutan"
+          >
+            <ArrowUpDown className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -142,7 +214,7 @@ export const ProjectsManagerView: React.FC = () => {
                     <h3 className="text-sm font-bold text-neutral-100 group-hover:text-amber-400 transition-colors truncate">
                       {proj.name}
                     </h3>
-                    <p className="text-[11px] text-neutral-400 font-mono mt-0.5 truncate">
+                    <p className="text-[11px] text-neutral-500 font-mono mt-0.5 truncate">
                       ID: {proj.id}
                     </p>
                   </div>
@@ -155,17 +227,51 @@ export const ProjectsManagerView: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between pt-4 mt-4 border-t border-neutral-800/80">
-                  <button
-                    onClick={() => setProjectToDelete({ id: proj.id, name: proj.name })}
-                    className="p-1.5 text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
-                    title="Hapus Proyek"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setProjectToRename({ id: proj.id, name: proj.name })}
+                      className="p-1.5 text-neutral-500 hover:text-white rounded hover:bg-neutral-800 transition-colors"
+                      title="Ganti Nama Proyek"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      onClick={() => setProjectToDuplicate({ id: proj.id, name: proj.name })}
+                      className="p-1.5 text-neutral-500 hover:text-white rounded hover:bg-neutral-800 transition-colors"
+                      title="Gandakan Proyek"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      onClick={() => handleOpenFolder(proj.id)}
+                      className="p-1.5 text-neutral-500 hover:text-emerald-400 rounded hover:bg-emerald-500/10 transition-colors"
+                      title="Buka File Explorer Workspace"
+                    >
+                      <FolderTree className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      onClick={() => handleExportProject(proj.id, proj.name)}
+                      className="p-1.5 text-neutral-500 hover:text-white rounded hover:bg-neutral-800 transition-colors"
+                      title="Unduh Berkas .ntbproject"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      onClick={() => setProjectToDelete({ id: proj.id, name: proj.name })}
+                      className="p-1.5 text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
+                      title="Hapus Proyek"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
 
                   <button
                     onClick={() => openProject(proj.id)}
-                    className="px-3.5 py-1.5 text-xs font-semibold text-neutral-200 hover:text-white bg-neutral-800 hover:bg-neutral-700 rounded-lg flex items-center gap-1.5 transition-colors"
+                    className="px-3.5 py-1.5 text-xs font-semibold text-neutral-200 hover:text-white bg-neutral-800 hover:bg-neutral-700 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <span>Buka Editor</span>
                     <ArrowRight className="w-3.5 h-3.5 text-amber-400" />
@@ -178,7 +284,7 @@ export const ProjectsManagerView: React.FC = () => {
       )}
 
       {/* Modals */}
-      <NewProjectModal isOpen={isNewModalOpen} onClose={() => setIsNewModalOpen(false)} />
+      <ProjectCreationWizardModal isOpen={isWizardModalOpen} onClose={() => setIsWizardModalOpen(false)} />
       <ImportProjectModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
       <ConfirmDeleteModal
         isOpen={Boolean(projectToDelete)}
@@ -191,6 +297,22 @@ export const ProjectsManagerView: React.FC = () => {
         }}
         onCancel={() => setProjectToDelete(null)}
       />
+      {projectToDuplicate && (
+        <DuplicateProjectModal
+          isOpen={Boolean(projectToDuplicate)}
+          projectId={projectToDuplicate.id}
+          originalName={projectToDuplicate.name}
+          onClose={() => setProjectToDuplicate(null)}
+        />
+      )}
+      {projectToRename && (
+        <RenameProjectModal
+          isOpen={Boolean(projectToRename)}
+          projectId={projectToRename.id}
+          currentName={projectToRename.name}
+          onClose={() => setProjectToRename(null)}
+        />
+      )}
     </div>
   );
 };

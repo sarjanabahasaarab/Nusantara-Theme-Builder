@@ -1,7 +1,7 @@
 /**
  * Nusantara Theme Builder — Project Domain Types
  * Lisensi: MIT
- * Phase 1 Foundation
+ * Phase 1 & Phase 2 Foundation
  */
 
 export type TargetPlatform = 'blogger' | 'wordpress';
@@ -75,13 +75,19 @@ export interface ProjectPage {
   components: ThemeComponent[];
 }
 
+export type AssetType = 'image' | 'svg' | 'font' | 'css' | 'js' | 'html' | 'text';
+
 export interface ProjectAsset {
   id: string;
   name: string;
-  type: 'image' | 'font' | 'css' | 'js';
+  type: AssetType;
+  mimeType: string;
   sizeBytes: number;
+  path: string; // e.g. "assets/hero.png"
   dataUrl?: string;
-  url?: string;
+  content?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ProjectMetadata {
@@ -93,6 +99,19 @@ export interface ProjectMetadata {
   tags: string[];
 }
 
+export interface ProjectFileNode {
+  id: string;
+  name: string;
+  path: string; // e.g. "styles/main.css"
+  type: 'file' | 'folder';
+  extension?: string;
+  sizeBytes?: number;
+  updatedAt: string;
+  content?: string;
+  isSystemFolder?: boolean;
+  children?: ProjectFileNode[];
+}
+
 export interface Project {
   schemaVersion: '1.0.0';
   id: string;
@@ -100,9 +119,11 @@ export interface Project {
   targetPlatform: TargetPlatform;
   createdAt: string;
   updatedAt: string;
+  storagePath?: string;
   themeSettings: ThemeSettings;
   pages: ProjectPage[];
   assets: ProjectAsset[];
+  customFiles?: ProjectFileNode[];
   metadata: ProjectMetadata;
 }
 
@@ -112,6 +133,8 @@ export interface ProjectSummary {
   targetPlatform: TargetPlatform;
   createdAt: string;
   updatedAt: string;
+  storagePath?: string;
   pageCount: number;
   componentCount: number;
+  assetCount?: number;
 }

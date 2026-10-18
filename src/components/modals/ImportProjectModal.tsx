@@ -97,15 +97,15 @@ export const ImportProjectModal: React.FC<ImportProjectModalProps> = ({ isOpen, 
             <input
               ref={fileInputRef}
               type="file"
-              accept=".json"
+              accept=".ntbproject,.json"
               onChange={handleFileChange}
               className="hidden"
             />
             <FileCode className="w-8 h-8 mx-auto text-neutral-400 group-hover:text-blue-400 transition-colors mb-2" />
             <p className="text-xs font-medium text-neutral-200">
-              {fileName ? fileName : 'Klik untuk memilih berkas .json'}
+              {fileName ? fileName : 'Klik untuk memilih berkas .ntbproject atau .json'}
             </p>
-            <p className="text-[11px] text-neutral-500 mt-1">Maksimal 10 MB per file proyek</p>
+            <p className="text-[11px] text-neutral-500 mt-1">Maksimal 10 MB per file format proyek internal v1.0.0</p>
           </div>
 
           <div className="relative">
@@ -113,7 +113,7 @@ export const ImportProjectModal: React.FC<ImportProjectModalProps> = ({ isOpen, 
               <div className="w-full border-t border-neutral-800" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-neutral-900 px-2 text-neutral-500">atau tempel kode JSON</span>
+              <span className="bg-neutral-900 px-2 text-neutral-500">atau tempel kode JSON .ntbproject</span>
             </div>
           </div>
 

@@ -37,9 +37,10 @@ describe('Project Factory & UUID Generation', () => {
     expect(proj.pages[0].components.some((c) => c.type === 'article')).toBe(true);
   });
 
-  it('menyediakan 6 starter template terverifikasi sesuai spesifikasi D', () => {
-    expect(STARTER_TEMPLATES.length).toBe(6);
+  it('menyediakan starter template terverifikasi sesuai spesifikasi', () => {
+    expect(STARTER_TEMPLATES.length).toBeGreaterThanOrEqual(6);
     const ids = STARTER_TEMPLATES.map((t) => t.id);
+    expect(ids).toContain('blank');
     expect(ids).toContain('personal-blog');
     expect(ids).toContain('news-blog');
     expect(ids).toContain('digital-magazine');

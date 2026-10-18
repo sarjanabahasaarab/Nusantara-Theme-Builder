@@ -1,11 +1,12 @@
 # Nusantara Theme Builder
 
 > **Software Desktop Open-Source Pembuat Template Blogger dan Theme WordPress**  
-> *Phase 1 — Fondasi Aplikasi Desktop, Dashboard, Penyimpanan Lokal, dan Editor Dasar*
+> *Phase 2 — Project Management, File Explorer, Template Library, dan Asset Management*
 
 ![Lisensi](https://img.shields.io/badge/license-MIT-green.svg)
 ![Target](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue.svg)
 ![Arsitektur](https://img.shields.io/badge/architecture-Tauri%202%20%2B%20React%2019-orange.svg)
+![Vitest](https://img.shields.io/badge/tests-45%20passed-brightgreen.svg)
 
 ---
 
@@ -13,75 +14,84 @@
 
 **Nusantara Theme Builder** adalah software desktop open-source yang dirancang untuk mempermudah kreator, pengembang web, dan komunitas di Indonesia dalam membuat, mengedit, mempratinjau, dan mengekspor template Blogger (Blogspot) serta theme WordPress secara visual maupun kode.
 
-Ini adalah **Phase 1** dari roadmap 10 fase. Fokus utama Phase 1 adalah membangun fondasi aplikasi yang benar-benar berfungsi, arsitektur yang bersih, penyimpanan data lokal di komputer pengguna, editor visual drag-and-drop dasar, integrasi Monaco Editor, serta arsitektur persiapan untuk Blogger dan WordPress.
+Aplikasi telah menyelesaikan **Phase 1** dan **Phase 2** dari roadmap 10 fase. Pada Phase 2, fokus utama adalah menghadirkan sistem manajemen proyek yang matang (wizard 5 langkah, duplikasi independen, ganti nama), File Explorer workspace dengan proteksi path traversal, perpustakaan template awal, serta pengelola aset lokal dengan sanitasi keamanan SVG.
 
 ---
 
-## 🚀 Fitur Phase 1 yang Tersedia
+## 🚀 Fitur yang Tersedia (Phase 1 & Phase 2)
 
-1. **Dashboard Profesional**:
-   - Ringkasan statistik penyimpanan lokal dan jumlah proyek.
-   - Akses cepat pembuatan proyek baru, pembukaan proyek tersimpan, dan impor proyek.
-   - Daftar proyek terbaru yang tersimpan secara riil.
-   - 6 Starter Template data v1.0.0 (Blog personal, Berita, Majalah digital, Portofolio, Blog teknologi, Landing page).
-   - Ringkasan Roadmap 10 Fase dan panduan singkat penggunaan.
+### 1. Project Dashboard & Manajemen Proyek Lanjutan (Phase 2 Selesai)
+- **Wizard Pembuatan Proyek 5-Langkah**:
+  1. *Identitas*: Nama proyek (dengan validasi karakter sistem berkas, panjang min/max, dan proteksi reserved names).
+  2. *Target Ekosistem*: Blogger (Blogspot) vs WordPress Theme.
+  3. *Tata Letak Awal*: Pilihan 7 starter template termasuk *Proyek Kosong*.
+  4. *Jalur Berkas*: Pemilihan direktori kerja penyimpanan lokal.
+  5. *Konfirmasi*: Tinjauan konfigurasi dan inisialisasi state proyek.
+- **Pencarian, Filter, & Pengurutan Proyek**: Filter platform target, pencarian instan nama, dan pengurutan dinamis berdasarkan tanggal pembaruan, tanggal pembuatan, atau nama alfabetis.
+- **Operasi Proyek Lengkap**:
+  - `duplicateProject`: Menggandakan proyek dengan ID unik baru dan kloning komponen tanpa berbagi state.
+  - `renameProject`: Mengganti nama proyek dengan validasi sistem berkas.
+  - `deleteProject`: Menghapus proyek dari disk lokal disertai dialog konfirmasi aman.
+- **Format File Proyek Terstandarisasi (`.ntbproject`)**:
+  - Ekspor proyek aktif ke format berkas `.ntbproject`.
+  - Impor berkas `.ntbproject` atau `.json` dengan validasi skema v1.0.0, batas ukuran file (maks 10 MB), dan perlindungan anti-timpa otomatis.
 
-2. **Manajemen Proyek Lokal**:
-   - Pembuatan proyek baru dengan validasi nama dan pilihan platform target (Blogger atau WordPress).
-   - Penyimpanan proyek lokal menggunakan model skema terstandarisasi JSON v1.0.0.
-   - Pemuatan dan pembukaan kembali proyek yang telah disimpan.
-   - Penghapusan proyek yang disertai dialog konfirmasi aman untuk mencegah kehilangan data.
-   - Ekspor proyek ke file `.json`.
-   - Impor proyek dari file `.json` dengan validasi struktur dan pencegahan penimpaan file secara diam-diam.
+### 2. File Explorer Workspace (Phase 2 Selesai)
+- Menampilkan pohon direktori internal proyek aktif:
+  ```
+  project-name/
+  ├── project.ntbproject
+  ├── pages/
+  ├── components/
+  ├── assets/
+  ├── styles/
+  ├── scripts/
+  └── docs/
+  ```
+- Navigasi folder interaktif (*expand / collapse*).
+- Membuat berkas teks baru (`.css`, `.js`, `.json`, `.html`, `.md`, `.txt`) dan folder baru.
+- Mengganti nama berkas/folder dan menghapus berkas.
+- Editor teks terintegrasi untuk membaca dan mengedit berkas teks workspace secara langsung.
+- **Proteksi Keamanan Workspace**:
+  - Membatasi manipulasi berkas hanya di dalam folder proyek.
+  - Pencegahan *path traversal* (`..`) dan penolakan path absolut berbahaya.
+  - Folder sistem (`pages`, `components`, `assets`) dilindungi dari penghapusan atau penggantian nama yang tidak disengaja.
 
-3. **Top Toolbar & Kontrol Sistem**:
-   - Indikator status simpan riil: *Menyimpan...*, *Tersimpan*, *Ada perubahan*, dan *Gagal simpan*.
-   - Riwayat **Undo (Ctrl+Z)** dan **Redo (Ctrl+Y)** untuk perubahan komponen dan gaya.
-   - Tombol **Simpan (Ctrl+S)**.
-   - Tombol **Pratinjau** responsif (Desktop, Tablet 768px, Ponsel 375px).
-   - Pengalih viewport kanvas visual.
-   - Menu Bantuan & Roadmap.
+### 3. Pengelola Aset Lokal (Phase 2 Selesai)
+- Dukungan gambar (PNG, JPEG, WebP, GIF), ikon SVG, font lokal (WOFF, WOFF2, TTF), serta berkas teks/kode (CSS, JS, HTML).
+- Unggah multi-berkas melalui file picker komputer.
+- **Resolusi Tabrakan Nama Otomatis**: Jika nama berkas bertabrakan, sistem otomatis memberikan nama unik (`hero.png` -> `hero-1.png`).
+- Pratinjau thumbnail gambar instan dan dialog modal inspeksi detail.
+- **Sanitasi Keamanan SVG**: Memindai konten SVG secara otomatis untuk menolak tag `<script>` atau event handler XSS (`onload=`, `javascript:`, dsb.).
+- Batas ukuran aset aman: Maksimal 5 MB per berkas.
 
-4. **Visual Editor (Drag-and-Drop Foundation)**:
-   - Palet komponen terstruktur: Header, Navigasi, Artikel, Konten, Sidebar, Tombol Aksi (CTA), dan Footer.
-   - Kanvas visual interaktif dengan pengurutan letak komponen menggunakan `@dnd-kit/sortable`.
-   - Pemilihan komponen untuk diperiksa propertinya.
-   - Duplikasi dan penghapusan komponen langsung dari kanvas.
-   - **Properties Inspector**: Mengubah judul, subjudul, konten teks, perataan teks, warna latar, warna teks, dan font secara langsung.
-   - Pengaturan tema global (warna primer, latar kanvas, font tulisan).
+### 4. Template Library Terisolasi (Phase 2 Selesai)
+- 7 Starter Templates:
+  - *Proyek Kosong*: Kanvas bersih murni tanpa komponen.
+  - *Blog Personal*: Tata letak catatan harian dan reflektif.
+  - *Portal Berita*: Grid tajuk berita, ticker, dan kategori multi-kolom.
+  - *Majalah Digital*: Publikasi gaya hidup berkelas dan visual rich.
+  - *Portofolio*: Showcase karya visual dan profil profesional.
+  - *Blog Teknologi*: Tipografi ramah kode dan dokumentasi teknis.
+  - *Landing Page*: Hero section konversi, pilar fitur, dan CTA.
+- Modal detail template dengan daftar komponen dan preview skema.
+- **Kloning Terisolasi**: Membuat proyek dari template menghasilkan salinan independen tanpa memutasi data master template.
 
-5. **Code Editor (Monaco Editor)**:
-   - Integrasi Monaco Editor terpasang langsung di dalam workspace.
-   - Tema gelap konsisten (`vs-dark`), penomoran baris, pencarian bawaan, dan pelipatan kode (code folding).
-   - Tab penjelajah dokumen:
-     - `*-project.json`: Model data proyek aktif.
-     - `preview-structure.html`: Dokumen struktur HTML pratinjau.
-     - `blogger-template-draft.xml` / `theme.json`: Draf arsitektur masa depan.
-   - Penegasan batas arsitektur bahwa file JSON proyek adalah data internal, bukan kode sumber tema jadi.
+### 5. Visual Editor & Inspector (Fondasi Phase 1)
+- Kanvas visual interaktif dengan pengurutan drag-and-drop `@dnd-kit/sortable`.
+- Palet komponen terstruktur (*Header, Navigasi, Artikel, Konten, Sidebar, Tombol Aksi, Footer*).
+- Properties Inspector untuk mengubah judul, subjudul, konten teks, perataan teks, warna latar, warna teks, dan font.
+- Pengaturan tema global (warna primer, warna kanvas, font tulisan).
+- Duplikasi dan penghapusan komponen kanvas.
+- Riwayat **Undo (Ctrl+Z)** dan **Redo (Ctrl+Y)** imutabel hingga 25 langkah.
 
-6. **Arsitektur Khusus Blogger (Persiapan Phase 4)**:
-   - Target proyek Blogger Blogspot v2/v3.
-   - Definisi struktur hirarki layout XML: `<b:skin>`, `<b:section>`, `<b:widget>`, dan `<b:includable>`.
-   - Modul kesiapan ekspor dan contoh cetak biru XML template.
+### 6. Monaco Code Editor (Fondasi Phase 1)
+- Monaco Editor terpasang langsung dengan tema gelap konsisten (`vs-dark`).
+- Tab navigasi dokumen: `*.ntbproject`, `preview-structure.html`, dan `blogger-template-draft.xml` / `theme.json`.
 
-7. **Arsitektur Khusus WordPress (Persiapan Phase 5)**:
-   - Target proyek WordPress.
-   - Pemisahan konsep Full Site Editing (FSE) Block Theme (`theme.json`, `templates/`, `parts/`) dengan Classic PHP Theme (`style.css`, `functions.php`).
-   - Draf konfigurasi `theme.json` v3 yang siap dikembangkan lebih lanjut.
-
-8. **Pengaturan & Diagnostik**:
-   - Diagnostik kapasitas penyimpanan lokal terpakai.
-   - Fitur pencadangan seluruh proyek ke dalam satu bundel berkas `.json`.
-   - Informasi lisensi open-source MIT.
-
----
-
-## ⚠️ Fitur yang Belum Tersedia di Phase 1 (Transparansi Roadmap)
-
-Sesuai dengan panduan arsitektur yang jujur, fitur berikut dijadwalkan pada fase berikutnya dan **tidak disimulasikan secara palsu** di Phase 1:
-- **Phase 4**: Serializer XML Blogger lengkap, validasi DTD Google Blogger, dan ekspor satu-klik berkas `.xml` ke Blogspot.
-- **Phase 5**: Kompilator blok Gutenberg, generator berkas PHP Classic Theme, dan pengemasan file `.zip` siap pasang di WordPress.
-- **Phase 6**: File tree explorer disk langsung dan sinkronisasi dua arah kode-ke-visual.
+### 7. Arsitektur Blogger & WordPress
+- Blogger: Target Blogger Blogspot v2/v3, pemetaan `<b:skin>`, `<b:section>`, `<b:widget>`, dsb.
+- WordPress: Pemisahan Full Site Editing (FSE) Block Theme (`theme.json` v3, `templates/`, `parts/`) dengan Classic PHP Theme (`style.css`, `functions.php`).
 
 ---
 
@@ -95,7 +105,7 @@ Sesuai dengan panduan arsitektur yang jujur, fitur berikut dijadwalkan pada fase
 - **Code Editor**: Monaco Editor (`@monaco-editor/react`)
 - **Drag-and-Drop**: `@dnd-kit/core` & `@dnd-kit/sortable`
 - **Ikonografi**: Lucide React
-- **Unit Testing**: Vitest
+- **Unit Testing**: Vitest (45 pengujian lulus)
 
 ---
 
@@ -103,16 +113,15 @@ Sesuai dengan panduan arsitektur yang jujur, fitur berikut dijadwalkan pada fase
 
 1. **Node.js**: Versi 18.x atau lebih baru (direkomendasikan v20 LTS).
 2. **npm** atau **pnpm**.
-3. **Rust & Cargo** (khusus jika ingin mengompilasi biner desktop native via Tauri):
+3. **Rust & Cargo** (khusus kompilasi biner desktop native via Tauri):
    - Kunjungi [https://rustup.rs](https://rustup.rs) untuk memasang Rust.
-   - Untuk Windows: Pasang Visual Studio C++ Build Tools dan WebView2 Runtime.
+   - Untuk Windows: Visual Studio C++ Build Tools & WebView2 Runtime.
    - Untuk Linux (Ubuntu/Debian): `sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget libssl-dev libgtk-3-dev`.
 
 ---
 
 ## 🛠️ Cara Memasang Dependensi
 
-Jalankan perintah berikut di direktori proyek:
 ```bash
 npm install
 ```
@@ -146,6 +155,11 @@ Pemeriksaan tipe data TypeScript:
 npm run typecheck
 ```
 
+Linter:
+```bash
+npm run lint
+```
+
 ---
 
 ## 🏗️ Cara Membangun (Build)
@@ -164,48 +178,16 @@ File installer (`.exe`/`.msi` di Windows, `.dmg` di macOS, `.deb`/`.AppImage` di
 
 ---
 
-## 🔧 Cara Mengatasi Masalah Umum (Troubleshooting)
+## 🚀 Panduan Mengunggah Phase 2 ke GitHub
 
-1. **Port 3000 Sedang Digunakan**:
-   - Jika port 3000 telah terpakai oleh proses lain, hentikan proses tersebut atau ubah konfigurasi port pada `vite.config.ts`.
-2. **Kompilasi Rust / Tauri Gagal**:
-   - Pastikan toolchain Rust Anda sudah mutakhir: `rustup update`.
-   - Di Linux, pastikan seluruh pustaka pengembang WebKitGTK telah terpasang.
-3. **Penyimpanan Lokal Penuh**:
-   - Buka menu **Pengaturan**, lalu unduh cadangan proyek Anda sebelum membersihkan cache peramban.
-
----
-
-## 🚀 Panduan Mengunggah Phase 1 ke GitHub
-
-1. Inisialisasi git pada repositori lokal:
-   ```bash
-   git init
-   git add .
-   git commit -m "feat: release Phase 1 Nusantara Theme Builder"
-   ```
-2. Buat repositori baru di GitHub bernama `nusantara-theme-builder`.
-3. Hubungkan remote dan push branch utama:
-   ```bash
-   git branch -M main
-   git remote add origin https://github.com/USERNAME/nusantara-theme-builder.git
-   git push -u origin main
-   ```
-
----
-
-## 🤝 Cara Berkontribusi
-
-Kontribusi dari seluruh pengembang dan kreator Indonesia sangat dinantikan:
-1. Fork repositori ini.
-2. Buat branch fitur baru (`git checkout -b fitur/nama-fitur`).
-3. Pastikan semua unit test lulus (`npm run test` dan `npm run typecheck`).
-4. Commit perubahan Anda (`git commit -m 'feat: implementasi fitur baru'`).
-5. Push ke branch Anda (`git push origin fitur/nama-fitur`).
-6. Buka **Pull Request** ke repositori utama.
+```bash
+git add .
+git commit -m "feat: implementasi Phase 2 (Project Management, File Explorer, Template Library, Asset Management)"
+git push origin main
+```
 
 ---
 
 ## 📄 Lisensi
 
-Proyek ini dirilis di bawah naungan **[Lisensi MIT](LICENSE)**. Anda bebas menggunakan, memodifikasi, dan mendistribusikan perangkat lunak ini secara terbuka.
+Proyek ini dirilis di bawah naungan **[Lisensi MIT](LICENSE)**.

@@ -1,7 +1,7 @@
 /**
  * Nusantara Theme Builder — Main Application Shell
  * Lisensi: MIT
- * Phase 1 Foundation
+ * Phase 1 & Phase 2 Architecture
  */
 
 import React, { useEffect, useState } from 'react';
@@ -13,6 +13,8 @@ import { DashboardView } from './features/dashboard/DashboardView';
 import { ProjectsManagerView } from './features/projects/ProjectsManagerView';
 import { VisualEditorView } from './features/visual-editor/VisualEditorView';
 import { CodeEditorView } from './features/code-editor/CodeEditorView';
+import { FileExplorerView } from './features/file-explorer/FileExplorerView';
+import { AssetManagementView } from './features/assets/AssetManagementView';
 import { BloggerBuilderView } from './features/blogger/BloggerBuilderView';
 import { WordPressBuilderView } from './features/wordpress/WordPressBuilderView';
 import { TemplateLibraryView } from './features/templates/TemplateLibraryView';
@@ -92,6 +94,8 @@ export default function App() {
           {activeView === 'projects' && <ProjectsManagerView />}
           {activeView === 'visual-editor' && <VisualEditorView />}
           {activeView === 'code-editor' && <CodeEditorView />}
+          {activeView === 'file-explorer' && <FileExplorerView />}
+          {activeView === 'assets' && <AssetManagementView />}
           {activeView === 'blogger' && <BloggerBuilderView />}
           {activeView === 'wordpress' && <WordPressBuilderView />}
           {activeView === 'templates' && <TemplateLibraryView />}

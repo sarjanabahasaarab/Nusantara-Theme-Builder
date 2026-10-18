@@ -1,6 +1,6 @@
 /**
  * Nusantara Theme Builder — Sidebar Navigasi Utama
- * Menu navigasi desktop terstruktur sesuai spesifikasi B.
+ * Menu navigasi desktop terstruktur (Phase 1 & Phase 2).
  */
 
 import React from 'react';
@@ -10,6 +10,8 @@ import {
   FolderOpen,
   Palette,
   Code2,
+  FolderTree,
+  ImageIcon,
   FileCode,
   Blocks,
   Library,
@@ -58,6 +60,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
       icon: Code2,
       badge: 'Monaco',
       badgeColor: 'text-amber-400 bg-amber-500/10'
+    },
+    {
+      id: 'file-explorer',
+      label: 'File Explorer',
+      icon: FolderTree,
+      badge: 'Phase 2',
+      badgeColor: 'text-emerald-400 bg-emerald-500/10',
+      requiresProject: true
+    },
+    {
+      id: 'assets',
+      label: 'Aset Proyek',
+      icon: ImageIcon,
+      badge: 'Phase 2',
+      badgeColor: 'text-emerald-400 bg-emerald-500/10',
+      requiresProject: true
     },
     {
       id: 'blogger',
@@ -145,7 +163,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
       <div className="p-2 border-t border-neutral-800/80">
         <button
           onClick={onToggleCollapse}
-          className="w-full flex items-center justify-center p-2 rounded-lg text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/60 transition-colors text-xs"
+          className="w-full flex items-center justify-center p-2 rounded-lg text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/60 transition-colors text-xs cursor-pointer"
           title={isCollapsed ? 'Perluas Sidebar' : 'Ciutkan Sidebar'}
         >
           {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
