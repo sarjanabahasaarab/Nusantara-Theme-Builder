@@ -1,0 +1,6 @@
+{
+  "name": "Nusantara Theme Builder",
+  "description": "Software desktop open-source untuk membuat, mengedit, mengelola, mempratinjau, dan mengekspor template Blogger dan theme WordPress.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

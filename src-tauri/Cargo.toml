@@ -1,0 +1,27 @@
+[package]
+name = "nusantara-theme-builder"
+version = "0.1.0"
+description = "Software Desktop Pembuat Template Blogger dan Theme WordPress"
+authors = ["Nusantara Theme Builder Contributors"]
+edition = "2021"
+license = "MIT"
+
+[lib]
+name = "nusantara_theme_builder_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.0.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.0.0", features = [] }
+tauri-plugin-opener = "2.0.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
