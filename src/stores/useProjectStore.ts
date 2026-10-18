@@ -9,13 +9,14 @@ import { create } from 'zustand';
 import {
   Project,
   ProjectSummary,
+  ProjectPage,
   ThemeComponent,
   ThemeSettings,
   ProjectAsset,
   ProjectFileNode
 } from '../types/project';
 import { projectService, ProjectListOptions } from '../services/project-service';
-import { StarterTemplateId } from '../domain/project/project-factory';
+import { StarterTemplateId, createComponent } from '../domain/project/project-factory';
 import { assetService } from '../services/asset-service';
 import { fileExplorerService } from '../services/file-explorer-service';
 
@@ -53,6 +54,7 @@ interface ProjectState {
   // Navigation & UI state
   activeView: ActiveAppView;
   viewportMode: ViewportMode;
+  zoomLevel: number;
   notifications: ToastMessage[];
 
   // Project state
@@ -85,6 +87,7 @@ interface ProjectState {
   // Actions
   setActiveView: (view: ActiveAppView) => void;
   setViewportMode: (mode: ViewportMode) => void;
+  setZoomLevel: (zoom: number) => void;
   addToast: (type: ToastMessage['type'], message: string) => void;
   removeToast: (id: string) => void;
 
@@ -104,12 +107,22 @@ interface ProjectState {
   importProjectFromJson: (jsonString: string) => Promise<{ success: boolean; error?: string }>;
   exportCurrentProjectFile: () => void;
 
+  // Page operations
+  setActivePageId: (pageId: string) => void;
+  addPage: (title: string, slug?: string, isHome?: boolean) => void;
+  updatePage: (pageId: string, updates: Partial<ProjectPage>) => void;
+  deletePage: (pageId: string) => void;
+
   // Component editing
   selectComponent: (id: string | null) => void;
   addComponent: (component: ThemeComponent, targetIndex?: number) => void;
   updateComponent: (id: string, updates: Partial<ThemeComponent>) => void;
   removeComponent: (id: string) => void;
   reorderComponents: (activeId: string, overId: string) => void;
+  moveComponentUp: (id: string) => void;
+  moveComponentDown: (id: string) => void;
+  duplicateComponent: (id: string) => void;
+  resetComponentStyles: (id: string) => void;
   updateThemeSettings: (updates: Partial<ThemeSettings>) => void;
 
   // File Explorer operations
@@ -253,6 +266,7 @@ function createCodeDocumentsForProject(project: Project | null): CodeDocument[] 
 export const useProjectStore = create<ProjectState>((set, get) => ({
   activeView: 'dashboard',
   viewportMode: 'desktop',
+  zoomLevel: 100,
   notifications: [],
 
   currentProject: null,
@@ -280,6 +294,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
   setActiveView: (view) => set({ activeView: view }),
   setViewportMode: (mode) => set({ viewportMode: mode }),
+  setZoomLevel: (zoom) => set({ zoomLevel: Math.max(50, Math.min(150, zoom)) }),
 
   addToast: (type, message) => {
     const id = 'toast-' + Math.random().toString(36).substring(2, 9);
@@ -653,6 +668,258 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       undoStack: newUndo,
       redoStack: []
     });
+  },
+
+  // Page Operations
+  setActivePageId: (pageId) => {
+    set({ activePageId: pageId, selectedComponentId: null });
+  },
+
+  addPage: (title, customSlug, isHome = false) => {
+    const { currentProject, undoStack } = get();
+    if (!currentProject) return;
+
+    const trimmedTitle = title.trim() || 'Halaman Baru';
+    const slug = (customSlug || trimmedTitle.toLowerCase().replace(/[^a-z0-9]/g, '-')).replace(/^-+|-+$/g, '') || 'halaman-baru';
+    const pageId = 'page-' + Math.random().toString(36).substring(2, 9);
+
+    const newPage: ProjectPage = {
+      id: pageId,
+      title: trimmedTitle,
+      slug,
+      isHome: isHome || currentProject.pages.length === 0,
+      components: []
+    };
+
+    const newUndo = [...undoStack, JSON.parse(JSON.stringify(currentProject))].slice(-MAX_HISTORY_STEPS);
+
+    const updatedPages: ProjectPage[] = isHome
+      ? [...currentProject.pages.map((p) => ({ ...p, isHome: false })), newPage]
+      : [...currentProject.pages, newPage];
+
+    set({
+      currentProject: {
+        ...currentProject,
+        pages: updatedPages,
+        updatedAt: new Date().toISOString()
+      },
+      activePageId: pageId,
+      selectedComponentId: null,
+      isDirty: true,
+      saveStatus: 'dirty',
+      undoStack: newUndo,
+      redoStack: []
+    });
+
+    get().addToast('success', `Halaman "${trimmedTitle}" berhasil ditambahkan.`);
+  },
+
+  updatePage: (pageId, updates) => {
+    const { currentProject, undoStack } = get();
+    if (!currentProject) return;
+
+    const newUndo = [...undoStack, JSON.parse(JSON.stringify(currentProject))].slice(-MAX_HISTORY_STEPS);
+
+    const updatedPages = currentProject.pages.map((p) => {
+      if (p.id !== pageId) {
+        if (updates.isHome) return { ...p, isHome: false };
+        return p;
+      }
+      return { ...p, ...updates };
+    });
+
+    set({
+      currentProject: {
+        ...currentProject,
+        pages: updatedPages,
+        updatedAt: new Date().toISOString()
+      },
+      isDirty: true,
+      saveStatus: 'dirty',
+      undoStack: newUndo,
+      redoStack: []
+    });
+  },
+
+  deletePage: (pageId) => {
+    const { currentProject, activePageId, undoStack } = get();
+    if (!currentProject) return;
+
+    if (currentProject.pages.length <= 1) {
+      get().addToast('warning', 'Tidak dapat menghapus satu-satunya halaman yang ada di proyek.');
+      return;
+    }
+
+    const pageToDelete = currentProject.pages.find((p) => p.id === pageId);
+    const newUndo = [...undoStack, JSON.parse(JSON.stringify(currentProject))].slice(-MAX_HISTORY_STEPS);
+    const updatedPages = currentProject.pages.filter((p) => p.id !== pageId);
+
+    const newActiveId = activePageId === pageId ? updatedPages[0].id : activePageId;
+
+    set({
+      currentProject: {
+        ...currentProject,
+        pages: updatedPages,
+        updatedAt: new Date().toISOString()
+      },
+      activePageId: newActiveId,
+      selectedComponentId: null,
+      isDirty: true,
+      saveStatus: 'dirty',
+      undoStack: newUndo,
+      redoStack: []
+    });
+
+    get().addToast('info', `Halaman "${pageToDelete?.title || pageId}" berhasil dihapus.`);
+  },
+
+  // Component Ordering and Actions
+  moveComponentUp: (id) => {
+    const { currentProject, activePageId, undoStack } = get();
+    if (!currentProject) return;
+
+    const currentPage = currentProject.pages.find((p) => p.id === activePageId);
+    if (!currentPage) return;
+
+    const index = currentPage.components.findIndex((c) => c.id === id);
+    if (index <= 0) return; // Already at top
+
+    const newUndo = [...undoStack, JSON.parse(JSON.stringify(currentProject))].slice(-MAX_HISTORY_STEPS);
+    const newComps = [...currentPage.components];
+    const [item] = newComps.splice(index, 1);
+    newComps.splice(index - 1, 0, item);
+
+    const updatedPages = currentProject.pages.map((p) =>
+      p.id === activePageId ? { ...p, components: newComps } : p
+    );
+
+    set({
+      currentProject: {
+        ...currentProject,
+        pages: updatedPages,
+        updatedAt: new Date().toISOString()
+      },
+      isDirty: true,
+      saveStatus: 'dirty',
+      undoStack: newUndo,
+      redoStack: []
+    });
+  },
+
+  moveComponentDown: (id) => {
+    const { currentProject, activePageId, undoStack } = get();
+    if (!currentProject) return;
+
+    const currentPage = currentProject.pages.find((p) => p.id === activePageId);
+    if (!currentPage) return;
+
+    const index = currentPage.components.findIndex((c) => c.id === id);
+    if (index === -1 || index >= currentPage.components.length - 1) return; // Already at bottom
+
+    const newUndo = [...undoStack, JSON.parse(JSON.stringify(currentProject))].slice(-MAX_HISTORY_STEPS);
+    const newComps = [...currentPage.components];
+    const [item] = newComps.splice(index, 1);
+    newComps.splice(index + 1, 0, item);
+
+    const updatedPages = currentProject.pages.map((p) =>
+      p.id === activePageId ? { ...p, components: newComps } : p
+    );
+
+    set({
+      currentProject: {
+        ...currentProject,
+        pages: updatedPages,
+        updatedAt: new Date().toISOString()
+      },
+      isDirty: true,
+      saveStatus: 'dirty',
+      undoStack: newUndo,
+      redoStack: []
+    });
+  },
+
+  duplicateComponent: (id) => {
+    const { currentProject, activePageId, undoStack } = get();
+    if (!currentProject) return;
+
+    const currentPage = currentProject.pages.find((p) => p.id === activePageId);
+    if (!currentPage) return;
+
+    const index = currentPage.components.findIndex((c) => c.id === id);
+    if (index === -1) return;
+
+    const target = currentPage.components[index];
+    const clone = createComponent(
+      target.type,
+      `${target.label} (Salinan)`,
+      target.category,
+      JSON.parse(JSON.stringify(target.props)),
+      JSON.parse(JSON.stringify(target.styles))
+    );
+
+    const newUndo = [...undoStack, JSON.parse(JSON.stringify(currentProject))].slice(-MAX_HISTORY_STEPS);
+    const newComps = [...currentPage.components];
+    newComps.splice(index + 1, 0, clone);
+
+    const updatedPages = currentProject.pages.map((p) =>
+      p.id === activePageId ? { ...p, components: newComps } : p
+    );
+
+    set({
+      currentProject: {
+        ...currentProject,
+        pages: updatedPages,
+        updatedAt: new Date().toISOString()
+      },
+      selectedComponentId: clone.id,
+      isDirty: true,
+      saveStatus: 'dirty',
+      undoStack: newUndo,
+      redoStack: []
+    });
+
+    get().addToast('info', `Komponen "${target.label}" berhasil diduplikasi.`);
+  },
+
+  resetComponentStyles: (id) => {
+    const { currentProject, activePageId, undoStack } = get();
+    if (!currentProject) return;
+
+    const newUndo = [...undoStack, JSON.parse(JSON.stringify(currentProject))].slice(-MAX_HISTORY_STEPS);
+
+    const updatedPages = currentProject.pages.map((p) => {
+      if (p.id !== activePageId) return p;
+      return {
+        ...p,
+        components: p.components.map((c) => {
+          if (c.id !== id) return c;
+          return {
+            ...c,
+            styles: {
+              padding: '1.25rem',
+              borderRadius: '0.375rem',
+              backgroundColor: 'transparent',
+              textColor: 'inherit',
+              textAlign: 'left' as const
+            }
+          };
+        })
+      };
+    });
+
+    set({
+      currentProject: {
+        ...currentProject,
+        pages: updatedPages,
+        updatedAt: new Date().toISOString()
+      },
+      isDirty: true,
+      saveStatus: 'dirty',
+      undoStack: newUndo,
+      redoStack: []
+    });
+
+    get().addToast('info', 'Gaya komponen dikembalikan ke nilai default.');
   },
 
   updateThemeSettings: (updates) => {

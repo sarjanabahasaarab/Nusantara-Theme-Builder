@@ -28,6 +28,8 @@ export interface ComponentStyleProps {
   borderColor?: string;
   fontSize?: string;
   fontWeight?: string;
+  boxShadow?: string;
+  customClasses?: string;
   customCss?: string;
 }
 

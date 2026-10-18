@@ -25,7 +25,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
             </div>
             <div>
               <h2 className="text-base font-semibold text-neutral-100">Nusantara Theme Builder</h2>
-              <p className="text-xs text-amber-400 font-mono">Versi 0.1.0 (Phase 1 Foundation)</p>
+              <p className="text-xs text-amber-400 font-mono">Versi 0.3.0 (Phase 3 Visual Editor & DND)</p>
             </div>
           </div>
           <button
@@ -81,15 +81,23 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          {/* Phase 1 Status & Honest Transparency */}
+          {/* Roadmap Status */}
           <div className="space-y-2">
             <h4 className="font-semibold text-neutral-100 uppercase tracking-wider text-[11px] text-neutral-400">
-              Status Phase 1 vs Roadmap 10 Fase
+              Status Roadmap 10 Fase
             </h4>
             <div className="space-y-2">
               <div className="flex items-center gap-2 p-2 bg-emerald-950/30 border border-emerald-800/40 rounded text-emerald-200">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span><strong>Phase 1 (Selesai):</strong> Fondasi aplikasi, manajemen proyek lokal, visual editor dasar, integrasi Monaco Editor, validasi JSON, dan arsitektur modular.</span>
+                <span><strong>Phase 1 (Selesai):</strong> Fondasi arsitektur, state store, Monaco Editor, validasi JSON, dan lisensi MIT.</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 bg-emerald-950/30 border border-emerald-800/40 rounded text-emerald-200">
+                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span><strong>Phase 2 (Selesai):</strong> Manajemen proyek lokal, Project Wizard, File Explorer sandbox, Template Library 6 kategori, dan Asset Management.</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 bg-emerald-950/30 border border-emerald-800/40 rounded text-emerald-200">
+                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span><strong>Phase 3 (Selesai):</strong> Advanced Visual Editor, dnd-kit sortable kanvas, Component Tree, Properties Inspector 3-tab, Asset Picker, Multi-Halaman, dan Zoom.</span>
               </div>
               <div className="flex items-center gap-2 p-2 bg-neutral-950 border border-neutral-800 rounded text-neutral-400">
                 <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
