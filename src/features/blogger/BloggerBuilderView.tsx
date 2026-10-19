@@ -1,165 +1,192 @@
 /**
- * Nusantara Theme Builder — Blogger Builder View
- * Arsitektur khusus Blogger & rencana implementasi Phase 4 sesuai spesifikasi H.
+ * Nusantara Theme Builder — Blogger Theme Builder View (Phase 4)
+ * Workspace Penuh Pembuat Tema Blogger dengan Visual Editor, Generator XML,
+ * Pemetaan Komponen, Validator 3-Tingkat, Impor Aman, dan Ekspor .xml.
+ * Lisensi: MIT
  */
 
 import React, { useState } from 'react';
 import { useProjectStore } from '../../stores/useProjectStore';
-import { checkBloggerExportReadiness } from '../../domain/blogger/blogger-module';
+import { BloggerToolbar } from './components/BloggerToolbar';
+import { BloggerComponentPalette } from './components/BloggerComponentPalette';
+import { BloggerStructureTree } from './components/BloggerStructureTree';
+import { BloggerPagesTab } from './components/BloggerPagesTab';
+import { BloggerCanvasPreview } from './components/BloggerCanvasPreview';
+import { BloggerPropertiesInspector } from './components/BloggerPropertiesInspector';
+import { BloggerValidationModal } from './components/BloggerValidationModal';
+import { BloggerImportModal } from './components/BloggerImportModal';
+import { BloggerExportModal } from './components/BloggerExportModal';
+import { BloggerTemplatesModal } from './components/BloggerTemplatesModal';
 import {
-  FileCode,
-  AlertTriangle,
   Layers,
-  Code2,
-  CheckCircle2,
-  ExternalLink,
-  Copy,
-  FolderPlus
+  FolderTree,
+  FileText,
+  AlertTriangle,
+  FolderPlus,
+  Sparkles
 } from 'lucide-react';
 import { NewProjectModal } from '../../components/modals/NewProjectModal';
 
 export const BloggerBuilderView: React.FC = () => {
-  const { currentProject, addToast } = useProjectStore();
-  const [copied, setCopied] = useState(false);
-  const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+  const { currentProject, createProject, selectComponent } = useProjectStore();
 
-  // If there's an active project, inspect readiness
-  const readiness = currentProject
-    ? checkBloggerExportReadiness(currentProject)
-    : null;
+  const [activeSidebarTab, setActiveSidebarTab] = useState<'components' | 'tree' | 'pages'>('components');
+  const [isValidationOpen, setIsValidationOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
+  const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
 
-  const handleCopyXml = () => {
-    if (!readiness) return;
-    navigator.clipboard.writeText(readiness.sampleXmlPreview);
-    setCopied(true);
-    addToast('info', 'Contoh skema XML Blogger disalin.');
-    setTimeout(() => setCopied(false), 2000);
-  };
+  // Jika belum ada proyek aktif
+  if (!currentProject) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 text-neutral-400 text-xs space-y-4 max-w-md mx-auto text-center">
+        <div className="w-12 h-12 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-400 flex items-center justify-center">
+          <Layers className="w-6 h-6" />
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-base font-bold text-neutral-200">Blogger Builder</h2>
+          <p className="text-neutral-500">
+            Silakan buka proyek bertarget Blogger atau buat proyek baru untuk mulai merancang dan mengekspor template Blogger XML.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+          <button
+            onClick={async () => {
+              await createProject('Blog Personal Blogger', 'blogger', 'personal-blog');
+            }}
+            className="px-4 py-2 bg-orange-500 hover:bg-orange-400 text-neutral-950 font-bold rounded-lg text-xs transition-colors cursor-pointer shadow flex items-center gap-1.5"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Buat Proyek Cepat</span>
+          </button>
+          <button
+            onClick={() => setIsNewProjectModalOpen(true)}
+            className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-semibold rounded-lg text-xs transition-colors cursor-pointer border border-neutral-700"
+          >
+            Pilih Konfigurasi Proyek...
+          </button>
+        </div>
+
+        <NewProjectModal
+          isOpen={isNewProjectModalOpen}
+          onClose={() => setIsNewProjectModalOpen(false)}
+        />
+      </div>
+    );
+  }
+
+  // Jika proyek bertarget WordPress, berikan notifikasi jujur dan ramah
+  const isBloggerProject = currentProject.targetPlatform === 'blogger';
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-orange-400 bg-orange-500/10 px-2.5 py-0.5 rounded-full border border-orange-500/30">
-              Target Platform: Blogger (Blogspot)
+    <div className="flex-1 flex flex-col h-[calc(100vh-3rem)] overflow-hidden select-none bg-neutral-950">
+      {/* 1. Toolbar Atas Khusus Blogger */}
+      <BloggerToolbar
+        onOpenValidation={() => setIsValidationOpen(true)}
+        onOpenImport={() => setIsImportOpen(true)}
+        onOpenExport={() => setIsExportOpen(true)}
+        onOpenTemplates={() => setIsTemplatesOpen(true)}
+      />
+
+      {/* Target Platform Notice (jika membuka proyek non-Blogger) */}
+      {!isBloggerProject && (
+        <div className="px-4 py-2 bg-amber-950/40 border-b border-amber-800/40 text-amber-300 text-xs flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>
+              Proyek ini awalnya bertarget "{currentProject.targetPlatform}". Generator Blogger akan mengadaptasi model layout ke skema XML Blogspot.
             </span>
-            <span className="text-xs text-neutral-500 font-mono">Modul Persiapan Phase 4</span>
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Blogger Builder Architecture</h1>
-          <p className="text-xs text-neutral-400">
-            Fondasi teknis dan cetak biru serializer XML Google Blogger Blogspot v2/v3.
-          </p>
-        </div>
-
-        {!currentProject && (
-          <button
-            onClick={() => setIsNewModalOpen(true)}
-            className="px-4 py-2 text-xs font-semibold text-neutral-950 bg-amber-400 hover:bg-amber-300 rounded-lg shadow-sm flex items-center gap-2"
-          >
-            <FolderPlus className="w-4 h-4" />
-            <span>Buat Proyek Blogger</span>
-          </button>
-        )}
-      </div>
-
-      {/* Honest Status Card */}
-      <div className="p-4 rounded-xl bg-orange-950/20 border border-orange-800/40 text-xs space-y-2">
-        <div className="flex items-center gap-2 text-orange-300 font-semibold">
-          <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0" />
-          <span>Informasi Batasan & Roadmap Phase 1 (Jujur dan Transparan)</span>
-        </div>
-        <p className="text-orange-200/90 leading-relaxed">
-          Pada Phase 1, modul ini menyediakan target platform Blogger, definisi tipe domain, dan spesifikasi struktur layout XML. Fitur <strong>XML Serializer lengkap, validasi skema Google DTD, dan tombol unduh file .xml yang siap diunggah ke Blogspot</strong> akan diimplementasikan penuh pada <strong>Phase 4</strong>.
-        </p>
-      </div>
-
-      {/* Architecture Layout Breakdown */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-5 rounded-xl bg-neutral-900/60 border border-neutral-800 space-y-3">
-          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Layers className="w-4 h-4 text-orange-400" />
-            Struktur Hirarki Layout XML Blogger
-          </h3>
-          <p className="text-xs text-neutral-400 leading-relaxed">
-            Format tema Blogger tidak menggunakan HTML standar biasa, melainkan XML berstruktur khusus:
-          </p>
-          <ul className="text-xs space-y-2 text-neutral-300 font-mono">
-            <li className="p-2 bg-neutral-950 rounded border border-neutral-800">
-              <span className="text-orange-400 font-bold">&lt;b:skin&gt;</span> — Tempat deklarasi variabel CSS dinamis dan CSS tema.
-            </li>
-            <li className="p-2 bg-neutral-950 rounded border border-neutral-800">
-              <span className="text-orange-400 font-bold">&lt;b:section&gt;</span> — Wadah utama untuk widget (Header, Blog, Sidebar, Footer).
-            </li>
-            <li className="p-2 bg-neutral-950 rounded border border-neutral-800">
-              <span className="text-orange-400 font-bold">&lt;b:widget&gt;</span> — Komponen fungsional (Header1, Blog1, Attribution1, HTML1).
-            </li>
-            <li className="p-2 bg-neutral-950 rounded border border-neutral-800">
-              <span className="text-orange-400 font-bold">&lt;b:includable&gt;</span> — Sub-rutin rendering data posting dan komentar.
-            </li>
-          </ul>
-        </div>
-
-        <div className="p-5 rounded-xl bg-neutral-900/60 border border-neutral-800 space-y-3">
-          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            Checklist Kesiapan Ekspor (Phase 4 Roadmap)
-          </h3>
-          <p className="text-xs text-neutral-400">
-            Persyaratan yang sedang dirancang sebelum ekspor satu-klik dinyatakan aktif:
-          </p>
-          <div className="space-y-2 text-xs">
-            <div className="flex items-start gap-2 p-2 bg-neutral-950 rounded border border-neutral-800 text-neutral-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 mt-1 shrink-0" />
-              <span>Model data proyek terisolasi (Selesai di Phase 1)</span>
-            </div>
-            <div className="flex items-start gap-2 p-2 bg-neutral-950 rounded border border-neutral-800 text-neutral-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 mt-1 shrink-0" />
-              <span>Struktur layout dan pemetaan widget (Selesai di Phase 1)</span>
-            </div>
-            <div className="flex items-start gap-2 p-2 bg-neutral-950 rounded border border-neutral-800 text-neutral-400">
-              <span className="w-2 h-2 rounded-full bg-neutral-600 mt-1 shrink-0" />
-              <span>XML Serializer engine (Phase 4)</span>
-            </div>
-            <div className="flex items-start gap-2 p-2 bg-neutral-950 rounded border border-neutral-800 text-neutral-400">
-              <span className="w-2 h-2 rounded-full bg-neutral-600 mt-1 shrink-0" />
-              <span>Uji coba upload langsung ke akun Blogger nyata (Phase 4)</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Sample XML Blueprint Preview */}
-      {readiness && (
-        <div className="p-5 rounded-xl bg-neutral-900/60 border border-neutral-800 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Code2 className="w-4 h-4 text-orange-400" />
-              <h3 className="text-sm font-semibold text-white">
-                Contoh Cetak Biru XML Blogger untuk Proyek Ini
-              </h3>
-            </div>
-            <button
-              onClick={handleCopyXml}
-              className="flex items-center gap-1 px-3 py-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded text-xs transition-colors"
-            >
-              <Copy className="w-3.5 h-3.5" />
-              <span>{copied ? 'Tersalin' : 'Salin Contoh XML'}</span>
-            </button>
-          </div>
-
-          <pre className="p-4 bg-neutral-950 rounded-lg border border-neutral-800 text-[11px] font-mono text-neutral-300 overflow-x-auto max-h-80 select-text leading-relaxed">
-            {readiness.sampleXmlPreview}
-          </pre>
+          <span className="text-[10px] font-mono text-amber-400">Mode Kompatibilitas Blogger</span>
         </div>
       )}
 
-      {/* New Project Modal */}
-      <NewProjectModal
-        isOpen={isNewModalOpen}
-        onClose={() => setIsNewModalOpen(false)}
-        defaultPlatform="blogger"
+      {/* 2. Workspace Utama (Sidebar Kiri + Kanvas Tengah + Inspektur Kanan) */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar Kiri: Tab Komponen, Struktur, dan Halaman */}
+        <aside className="w-72 border-r border-neutral-800 bg-neutral-900/50 flex flex-col shrink-0 overflow-hidden">
+          {/* Sidebar Tab Header */}
+          <div className="grid grid-cols-3 border-b border-neutral-800 bg-neutral-950/90 text-neutral-400">
+            <button
+              onClick={() => setActiveSidebarTab('components')}
+              className={`py-2.5 flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors cursor-pointer border-b-2 ${
+                activeSidebarTab === 'components'
+                  ? 'border-orange-500 text-orange-400 font-bold bg-neutral-900/60'
+                  : 'border-transparent hover:text-neutral-200'
+              }`}
+              title="Katalog Komponen Blogger"
+            >
+              <Layers className="w-4 h-4" />
+              <span>Komponen</span>
+            </button>
+
+            <button
+              onClick={() => setActiveSidebarTab('tree')}
+              className={`py-2.5 flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors cursor-pointer border-b-2 ${
+                activeSidebarTab === 'tree'
+                  ? 'border-orange-500 text-orange-400 font-bold bg-neutral-900/60'
+                  : 'border-transparent hover:text-neutral-200'
+              }`}
+              title="Hierarki Pohon Struktur Tema"
+            >
+              <FolderTree className="w-4 h-4" />
+              <span>Struktur</span>
+            </button>
+
+            <button
+              onClick={() => setActiveSidebarTab('pages')}
+              className={`py-2.5 flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors cursor-pointer border-b-2 ${
+                activeSidebarTab === 'pages'
+                  ? 'border-orange-500 text-orange-400 font-bold bg-neutral-900/60'
+                  : 'border-transparent hover:text-neutral-200'
+              }`}
+              title="Konteks Halaman Blogger"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Halaman</span>
+            </button>
+          </div>
+
+          {/* Sidebar Body */}
+          <div className="flex-1 overflow-hidden">
+            {activeSidebarTab === 'components' && <BloggerComponentPalette />}
+            {activeSidebarTab === 'tree' && <BloggerStructureTree />}
+            {activeSidebarTab === 'pages' && <BloggerPagesTab />}
+          </div>
+        </aside>
+
+        {/* Workspace Tengah: Kanvas Pratinjau Tema Responsif */}
+        <main
+          onClick={() => selectComponent(null)}
+          className="flex-1 flex flex-col overflow-hidden bg-neutral-950 relative"
+        >
+          <BloggerCanvasPreview />
+        </main>
+
+        {/* Inspektur Kanan: Properti Komponen atau Pengaturan Tema Blogger */}
+        <BloggerPropertiesInspector />
+      </div>
+
+      {/* 3. Modal-Modal Aksi Nyata */}
+      <BloggerValidationModal
+        isOpen={isValidationOpen}
+        onClose={() => setIsValidationOpen(false)}
+      />
+
+      <BloggerImportModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+      />
+
+      <BloggerExportModal
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+      />
+
+      <BloggerTemplatesModal
+        isOpen={isTemplatesOpen}
+        onClose={() => setIsTemplatesOpen(false)}
       />
     </div>
   );

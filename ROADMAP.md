@@ -29,20 +29,24 @@ Nusantara Theme Builder dikembangkan secara bertahap melalui 10 fase terstruktur
 
 ---
 
-### Phase 3 — Visual Editor Drag-and-Drop Lanjutan & Component Tree
-- Pohon hirarki komponen visual (Component Tree view).
-- Nesting komponen (wadah/kontainer di dalam komponen).
-- Pengaturan breakpoint visual responsif (Desktop, Tablet, Mobile) per properti gaya.
-- Palet komponen tingkat lanjut (Slider, Grid dinamis, Modal, Accordion).
+### Phase 3 — Visual Editor Drag-and-Drop Lanjutan, Component Tree, & Inspector [SELESAI]
+- Pohon hirarki komponen visual (Component Tree view) dengan navigasi seleksi.
+- Pengurutan drag-and-drop kanvas menggunakan `@dnd-kit/sortable` dan `@dnd-kit/core`.
+- Properties Inspector 3-tab (Konten, Gaya & Tata Letak, Platform & Lanjutan).
+- Pengatur skala kanvas (Zoom Level 50% - 150%) dan viewport toggle (Desktop, Tablet, Ponsel).
+- Pengelolaan multi-halaman proyek dengan pengaturan slug dan halaman beranda (`isHome`).
+- Modal pemilih aset (`AssetPickerModal`) terintegrasi langsung dari aset proyek Phase 2.
 
 ---
 
-### Phase 4 — Blogger Builder, XML Generator, & Validator Blogspot
-- Kompilator layout komponen ke XML Template Blogger valid v2/v3.
-- Serializer `<b:skin>`, variabel CSS dinamis Blogger, dan font Blogger.
-- Pembangun seksi `<b:section>` dan pemetaan widget bawaan (`Header`, `Blog`, `FeaturedPost`, `PopularPosts`, `HTML`).
-- Validator XML Well-Formedness dan kepatuhan DTD Google Blogger.
-- Ekspor berkas `.xml` sekali klik yang siap diunggah ke dashboard Blogspot.
+### Phase 4 — Blogger Builder, XML Generator, & Validator Blogspot [SELESAI]
+- Kompilator layout komponen ke XML Template Blogger valid v2/v3 dengan namespace resmi.
+- Serializer `<b:skin>`, variabel CSS dinamis Blogger, dan font Google.
+- Pembangun seksi `<b:section>` dan pemetaan widget bawaan (`Header`, `PageList`, `Blog`, `PopularPosts`, `Label`, `Attribution`, `HTML`).
+- Validator XML 3-tingkat: Sintaks XML (`fast-xml-parser`), Struktur Template Blogger, dan Kualitas SEO.
+- Impor aman file `.xml` dengan isolasi eksekusi skrip dan batas ukuran 5 MB.
+- Ekspor berkas `.xml` ber-encoding UTF-8 sekali klik yang siap diunggah ke dashboard Blogger.
+- Pustaka 5 template awal khusus Blogger (Personal, Berita, Majalah, Teknologi, Pendidikan).
 
 ---
 

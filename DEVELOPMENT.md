@@ -90,10 +90,17 @@ nusantara-theme-builder/
 │       ├── projects/                # Manajer pencarian & daftar proyek
 │       ├── file-explorer/           # Eksplorasi struktur berkas workspace
 │       ├── assets/                  # Pengelolaan aset lokal terisolasi
-│       ├── visual-editor/           # Editor visual drag-and-drop
+│       ├── visual-editor/           # Editor visual drag-and-drop & Component Tree (Phase 3)
+│       ├── blogger/                 # Modul Penuh Blogger Theme Builder (Phase 4)
+│       │   ├── generator/           # Generator XML, Serializer, & Component Mapper
+│       │   ├── validator/           # Validator 3-tingkat (Sintaks, Template, SEO)
+│       │   ├── importer/            # Parser XML aman (anti-XXE/anti-script)
+│       │   ├── exporter/            # Layanan pra-ekspor & unduhan file .xml
+│       │   ├── settings/            # Panel pengaturan tema komprehensif
+│       │   ├── components/          # Toolbar, Canvas Preview, Palette, Tree, Modals
+│       │   └── data/                # 5 Starter template khusus Blogger
+│       ├── wordpress/               # Modul arsitektur WordPress (Phase 5)
 │       ├── code-editor/             # Editor kode Monaco
-│       ├── blogger/                 # Modul arsitektur Blogger
-│       ├── wordpress/               # Modul arsitektur WordPress
 │       ├── templates/               # Katalog template awal
 │       └── settings/                # Pengaturan dan pencadangan
 ├── src-tauri/

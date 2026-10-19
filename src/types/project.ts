@@ -67,6 +67,7 @@ export interface ThemeSettings {
   containerMaxWidth: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
   darkModeSupport: boolean;
   customHeadCode?: string;
+  bloggerSettings?: any;
 }
 
 export interface ProjectPage {

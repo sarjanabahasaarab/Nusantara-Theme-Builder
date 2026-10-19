@@ -63,8 +63,8 @@ export const TopToolbar: React.FC = () => {
             <div className="flex flex-col">
               <span className="text-xs font-bold tracking-tight text-neutral-100 flex items-center gap-1.5">
                 Nusantara Theme Builder
-                <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded">
-                  Phase 3
+                <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 bg-orange-500/10 text-orange-400 border border-orange-500/30 rounded">
+                  Phase 4
                 </span>
               </span>
             </div>

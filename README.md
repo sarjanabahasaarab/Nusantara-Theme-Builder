@@ -1,12 +1,12 @@
 # Nusantara Theme Builder
 
 > **Software Desktop Open-Source Pembuat Template Blogger dan Theme WordPress**  
-> *Phase 2 — Project Management, File Explorer, Template Library, dan Asset Management*
+> *Phase 4 — Blogger Theme Builder, XML Serializer, 3-Tier Validator, Impor & Ekspor*
 
 ![Lisensi](https://img.shields.io/badge/license-MIT-green.svg)
 ![Target](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue.svg)
 ![Arsitektur](https://img.shields.io/badge/architecture-Tauri%202%20%2B%20React%2019-orange.svg)
-![Vitest](https://img.shields.io/badge/tests-45%20passed-brightgreen.svg)
+![Vitest](https://img.shields.io/badge/tests-61%20passed-brightgreen.svg)
 
 ---
 
@@ -14,11 +14,20 @@
 
 **Nusantara Theme Builder** adalah software desktop open-source yang dirancang untuk mempermudah kreator, pengembang web, dan komunitas di Indonesia dalam membuat, mengedit, mempratinjau, dan mengekspor template Blogger (Blogspot) serta theme WordPress secara visual maupun kode.
 
-Aplikasi telah menyelesaikan **Phase 1** dan **Phase 2** dari roadmap 10 fase. Pada Phase 2, fokus utama adalah menghadirkan sistem manajemen proyek yang matang (wizard 5 langkah, duplikasi independen, ganti nama), File Explorer workspace dengan proteksi path traversal, perpustakaan template awal, serta pengelola aset lokal dengan sanitasi keamanan SVG.
+Aplikasi telah menyelesaikan **Phase 1**, **Phase 2**, **Phase 3**, dan **Phase 4** dari roadmap 10 fase. Pada **Phase 4**, fokus utama adalah modul **Blogger Theme Builder** yang berfungsi nyata: perancangan visual tema Blogger, pengaturan spesifik Blogger (identitas, layout kolom, tipografi, format artikel, dan SEO dasar), serializer XML Blogger v2/v3, validator 3-tingkat (sintaks XML, struktur template, kualitas & SEO), fitur impor tema aman berbatas 5 MB tanpa eksekusi skrip, serta ekspor file `.xml` siap pakai dengan encoding UTF-8.
 
 ---
 
-## 🚀 Fitur yang Tersedia (Phase 1 & Phase 2)
+## 🚀 Fitur yang Tersedia (Phase 1, 2, 3, & 4)
+
+### 0. Blogger Theme Builder & XML Engine (Phase 4 Baru Selesai)
+- **Visual Editor Blogger**: Penataan layout dan komponen bertarget Blogger dengan pratinjau viewport responsif (*Desktop*, *Tablet*, *Ponsel*) dan indikator data simulasi pratinjau yang transparan.
+- **Generator & Serializer XML Blogger**: Menghasilkan dokumen XML valid Google Blogger v2/v3 ber-namespace lengkap (`xmlns:b`, `xmlns:data`, `xmlns:expr`), deklarasi variabel CSS di `<b:skin>`, wadah `<b:section>`, widget fungsional (`Header`, `PageList`, `Blog`, `PopularPosts`, `Label`, `Attribution`, `HTML`), dan sub-rutin `<b:includable>`.
+- **Pemetaan Komponen Visual (Mapper)**: Mengklasifikasikan komponen visual ke status *Supported* (Didukung Penuh), *Partial* (Didukung Sebagian), dan *Unsupported* (Belum Didukung) dengan peringatan sebelum ekspor.
+- **Validator 3-Tingkat**: Evaluasi menyeluruh terhadap Sintaks XML (`fast-xml-parser`), Struktur Template Blogger, dan Kualitas/Aksesibilitas/SEO.
+- **Impor Tema XML Aman**: Mem-parsing berkas tema Blogger lama hingga 5 MB, mengisolasi script berisiko, dan mengekstrak variabel warna serta widget ke kanvas proyek.
+- **Ekspor Dokumen .xml**: Pemeriksaan pra-ekspor otomatis, ringkasan catatan/peringatan, dan pengunduhan berkas XML ber-encoding UTF-8 yang siap dipulihkan di dashboard Blogger.
+- **5 Pustaka Template Awal Blogger**: *Blog Personal Minimalis*, *Portal Berita Kilat*, *Majalah Digital Gaya Hidup*, *Blog Teknologi & Koding*, dan *Portal Edukasi & Pembelajaran*.
 
 ### 1. Project Dashboard & Manajemen Proyek Lanjutan (Phase 2 Selesai)
 - **Wizard Pembuatan Proyek 5-Langkah**:
