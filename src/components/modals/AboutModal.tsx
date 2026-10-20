@@ -25,7 +25,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
             </div>
             <div>
               <h2 className="text-base font-semibold text-neutral-100">Nusantara Theme Builder</h2>
-              <p className="text-xs text-orange-400 font-mono">Versi 0.4.0 (Phase 4 Blogger Theme Builder & XML)</p>
+              <p className="text-xs text-blue-400 font-mono">Versi 0.5.0 (Phase 5 WordPress Theme Builder & ZIP Export)</p>
             </div>
           </div>
           <button
@@ -71,8 +71,8 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                 <span className="font-medium text-neutral-200">Monaco Editor</span>
               </div>
               <div className="p-2.5 bg-neutral-950 rounded border border-neutral-800">
-                <span className="text-[10px] text-neutral-500 block">XML Engine</span>
-                <span className="font-medium text-neutral-200">fast-xml-parser & Serializer</span>
+                <span className="text-[10px] text-neutral-500 block">WordPress Engine</span>
+                <span className="font-medium text-neutral-200">theme.json v3 & JSZip</span>
               </div>
               <div className="p-2.5 bg-neutral-950 rounded border border-neutral-800">
                 <span className="text-[10px] text-neutral-500 block">Unit Testing</span>
@@ -103,9 +103,13 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span><strong>Phase 4 (Selesai):</strong> Blogger Theme Builder, visual layout, serializer XML Blogger v2/v3, validasi 3-tingkat, impor aman, dan ekspor .xml.</span>
               </div>
+              <div className="flex items-center gap-2 p-2 bg-emerald-950/30 border border-emerald-800/40 rounded text-emerald-200">
+                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span><strong>Phase 5 (Selesai):</strong> WordPress Theme Builder, Block Theme FSE, theme.json v3, Templates & Parts, Block Patterns, validator 4-tingkat, dan ekspor ZIP siap pasang.</span>
+              </div>
               <div className="flex items-center gap-2 p-2 bg-neutral-950 border border-neutral-800 rounded text-neutral-400">
-                <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
-                <span><strong>Phase 5 (Mendatang):</strong> WordPress Builder penuh, theme.json compiler, block patterns, dan ekspor ZIP.</span>
+                <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
+                <span><strong>Phase 6 (Mendatang):</strong> Integrasi E-Commerce & WooCommerce Block Components.</span>
               </div>
             </div>
           </div>

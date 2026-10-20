@@ -31,13 +31,15 @@ export interface ComponentStyleProps {
   boxShadow?: string;
   customClasses?: string;
   customCss?: string;
+  containerMaxWidth?: string;
 }
 
 export interface ThemeComponent {
   id: string;
   type: string;
-  label: string;
-  category: ComponentCategory;
+  label?: string;
+  name?: string;
+  category?: ComponentCategory;
   props: {
     title?: string;
     content?: string;
@@ -45,8 +47,8 @@ export interface ThemeComponent {
     href?: string;
     alt?: string;
     imageUrl?: string;
-    items?: Array<{ id: string; label: string; url: string }>;
-    columns?: number;
+    items?: any;
+    columns?: any;
     showDate?: boolean;
     showAuthor?: boolean;
     buttonText?: string;
@@ -68,6 +70,7 @@ export interface ThemeSettings {
   darkModeSupport: boolean;
   customHeadCode?: string;
   bloggerSettings?: any;
+  wordpressSettings?: any;
 }
 
 export interface ProjectPage {

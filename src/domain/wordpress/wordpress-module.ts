@@ -35,10 +35,6 @@ export function checkWordPressExportReadiness(project: Project): WordPressExport
     blockers.push(`Proyek ini bertarget platform "${project.targetPlatform}", bukan WordPress.`);
   }
 
-  // Phase 1 limitation notice (truthful implementation per specification I)
-  blockers.push('ZIP Packager & Directory Tree Generator dijadwalkan pada Phase 5.');
-  blockers.push('theme.json Compiler & Gutenberg block validator dijadwalkan pada Phase 5.');
-
   const themeJsonDraft: WordPressThemeJsonConfig = {
     version: 3,
     settings: {
@@ -91,8 +87,8 @@ Tags: ${project.metadata.tags.join(', ')}
 */`;
 
   return {
-    isReady: false,
-    roadmapPhase: 'Phase 5 (WordPress Builder & ZIP Packaging)',
+    isReady: isWp,
+    roadmapPhase: 'Phase 5 (Selesai: WordPress Theme Builder & ZIP Packaging)',
     themeTypesSupported: ['Block Theme (Gutenberg Full Site Editing)', 'Classic PHP Theme (Legacy)'],
     themeJsonDraft,
     styleCssHeaderDraft,
